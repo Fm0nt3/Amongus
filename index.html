@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murder Mystery Dinner Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("0MmSAszLbRBWPu9Ud");
+        })();
+    </script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Georgia', serif;
+        }
+        .typewriter {
+            overflow: hidden;
+            border-right: .15em solid #dc2626;
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: .15em;
+            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+        }
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #dc2626; }
+        }
+        .crime-scene {
+            background-image: url('https://images.unsplash.com/photo-1534447677768-be436bb09401?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1191&q=80');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: multiply;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        .blood-text {
+            color: #dc2626;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .evidence-card {
+            transition: all 0.3s ease;
+            border: 1px solid #334155;
+        }
+        .evidence-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.4);
+            border-color: #dc2626;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #1e293b;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <div class="flex flex-col items-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
+                <h3 class="text-xl font-bold blood-text">Invio in corso...</h3>
+                <p class="text-gray-300 mt-2">Stiamo inviando la tua risposta</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <h3 class="text-xl font-bold blood-text">Risposta inviata!</h3>
+                <p class="text-gray-300 mt-2">La tua risposta è stata inviata correttamente all'host.</p>
+                <button id="closeSuccessModal" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                    Chiudi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <div class="flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <h3 class="text-xl font-bold blood-text">Errore!</h3>
+                <p class="text-gray-300 mt-2" id="errorMessage">Si è verificato un errore durante l'invio della risposta.</p>
+                <button id="closeErrorModal" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                    Riprova
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="crime-scene min-h-screen flex flex-col justify-center items-center px-4 py-16">
+        <div class="max-w-4xl mx-auto text-center" data-aos="fade-up">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 blood-text">
+                <span class="typewriter">Murder Mystery Dinner</span>
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 text-gray-300">
+                Solve the crime before dessert is served...
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#game" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
+                    <i data-feather="play" class="mr-2"></i> Start Game
+                </a>
+                <a href="#about" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
+                    <i data-feather="info" class="mr-2"></i> How It Works
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Section -->
+    <section id="game" class="py-20 px-4">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12 blood-text" data-aos="fade-up">The Crime Scene</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                <div class="evidence-card bg-gray-800 p-6 rounded-lg" data-aos="fade-up" data-aos-delay="100">
+                    <div class="text-red-500 mb-4">
+                        <i data-feather="user" class="w-10 h-10"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">The Victim</h3>
+                    <p class="text-gray-300">Mr. Reginald Blackwood, a wealthy industrialist, was found dead in his study.</p>
+                </div>
+                <div class="evidence-card bg-gray-800 p-6 rounded-lg" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-red-500 mb-4">
+                        <i data-feather="clock" class="w-10 h-10"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Time of Death</h3>
+                    <p class="text-gray-300">Between 8:30 PM and 9:15 PM during the dinner party.</p>
+                </div>
+                <div class="evidence-card bg-gray-800 p-6 rounded-lg" data-aos="fade-up" data-aos-delay="300">
+                    <div class="text-red-500 mb-4">
+                        <i data-feather="alert-triangle" class="w-10 h-10"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Murder Weapon</h3>
+                    <p class="text-gray-300">A silver letter opener found near the body.</p>
+                </div>
+            </div>
+
+            <!-- Question Form -->
+            <div class="bg-gray-800 rounded-lg p-8 shadow-lg" data-aos="fade-up">
+                <h3 class="text-2xl font-bold mb-6 blood-text">Question 1: Who had motive?</h3>
+                <form id="answerForm" class="space-y-6">
+                    <!-- Aggiungi input per il nome della squadra -->
+                    <div>
+                        <label for="teamName" class="block text-gray-300 mb-2">Team Name:</label>
+                        <input type="text" id="teamName" name="teamName" required class="w-full bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Inserisci il nome della tua squadra">
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <label class="flex items-center space-x-3">
+                            <input type="radio" name="answer" value="A) The jealous business partner" class="h-5 w-5 text-red-600">
+                            <span class="text-gray-300">A) The jealous business partner</span>
+                        </label>
+                        <label class="flex items-center space-x-3">
+                            <input type="radio" name="answer" value="B) The scorned lover" class="h-5 w-5 text-red-600">
+                            <span class="text-gray-300">B) The scorned lover</span>
+                        </label>
+                        <label class="flex items-center space-x-3">
+                            <input type="radio" name="answer" value="C) The disinherited nephew" class="h-5 w-5 text-red-600">
+                            <span class="text-gray-300">C) The disinherited nephew</span>
+                        </label>
+                        <label class="flex items-center space-x-3">
+                            <input type="radio" name="answer" value="D) The blackmailed maid" class="h-5 w-5 text-red-600">
+                            <span class="text-gray-300">D) The blackmailed maid</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                        <i data-feather="send" class="mr-2"></i> Submit Answer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 px-4 bg-gray-900">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-12 blood-text" data-aos="fade-up">How It Works</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="space-y-6" data-aos="fade-right">
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-red-600 p-3 rounded-full">
+                            <i data-feather="users" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Team Play</h3>
+                            <p class="text-gray-300">Work in teams of 4-6 people to solve the mystery together. Each team will discuss and submit their answers.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-red-600 p-3 rounded-full">
+                            <i data-feather="clock" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Timed Questions</h3>
+                            <p class="text-gray-300">Each question will be displayed for a limited time. Discuss quickly but thoroughly!</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-6" data-aos="fade-left">
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-red-600 p-3 rounded-full">
+                            <i data-feather="message-square" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Discussion</h3>
+                            <p class="text-gray-300">Discuss the clues and theories with your group to determine the most likely answers.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <div class="bg-red-600 p-3 rounded-full">
+                            <i data-feather="eye" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">Clues & Evidence</h3>
+                            <p class="text-gray-300">Pay attention to all details - some clues might be hidden in the story or environment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-950 py-12 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <h3 class="text-2xl font-bold blood-text">Murder Mystery Dinner</h3>
+                    <p class="text-gray-400">Solve the crime before it's too late...</p>
+                </div>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-red-500 transition duration-300">
+                        <i data-feather="instagram" class="w-6 h-6"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-red-500 transition duration-300">
+                        <i data-feather="facebook" class="w-6 h-6"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-red-500 transition duration-300">
+                        <i data-feather="twitter" class="w-6 h-6"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+                <p>© 2023 Murder Mystery Dinner Game. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Inizializza le animazioni
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({
+                duration: 800,
+                easing: 'ease-in-out',
+                once: true
+            });
+            feather.replace();
+        });
+        
+        // Gestione modali
+        const loadingModal = document.getElementById('loadingModal');
+        const successModal = document.getElementById('successModal');
+        const errorModal = document.getElementById('errorModal');
+        const errorMessage = document.getElementById('errorMessage');
+        const closeSuccessModal = document.getElementById('closeSuccessModal');
+        const closeErrorModal = document.getElementById('closeErrorModal');
+        
+        function showModal(modal) {
+            modal.style.display = 'flex';
+        }
+        
+        function hideModal(modal) {
+            modal.style.display = 'none';
+        }
+        
+        closeSuccessModal.addEventListener('click', () => hideModal(successModal));
+        closeErrorModal.addEventListener('click', () => hideModal(errorModal));
+        
+        // Form submission
+        document.getElementById('answerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            const teamName = document.getElementById('teamName').value;
+            
+            if (!selectedAnswer || !teamName) {
+                errorMessage.textContent = 'Per favore inserisci il nome della squadra e seleziona una risposta!';
+                showModal(errorModal);
+                return;
+            }
+            
+            // Mostra il modal di caricamento
+            showModal(loadingModal);
+            
+            // Collect form data
+            const formData = {
+                question: 'Question 1: Who had motive?',
+                answer: selectedAnswer.value,
+                team: teamName,
+                timestamp: new Date().toLocaleString('it-IT')
+            };
+            
+            // Send email using EmailJS
+            emailjs.send('service_wn8j0qh', 'template_d8lyjqb', {
+                to_email: 'montevecchifrancesco@gmail.com',
+                team_name: formData.team,
+                question: formData.question,
+                answer: formData.answer,
+                timestamp: formData.timestamp
+            })
+            .then(function(response) {
+                console.log('Email inviata con successo!', response.status, response.text);
+                hideModal(loadingModal);
+                showModal(successModal);
+                document.getElementById('answerForm').reset();
+            }, function(error) {
+                console.log('Errore nell\'invio dell\'email:', error);
+                hideModal(loadingModal);
+                errorMessage.textContent = 'Si è verificato un errore durante l\'invio. Riprova più tardi.';
+                showModal(errorModal);
+            });
+        });
+    </script>
+</body>
+</html>
