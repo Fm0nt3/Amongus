@@ -498,15 +498,25 @@ function setPhaseBar(pbId, ptId, phase) {
 
 // ── FIREBASE ───────────────────────────────────────────────────────
 window.connectFB = async () => {
-  const key=gv('fb-key'), url=gv('fb-url'), pid=gv('fb-pid'), aid=gv('fb-aid');
+  const key=gv('fb-key'), url=gv('fb-url').trim(), pid=gv('fb-pid').trim(), aid=gv('fb-aid').trim();
   if(!key||!url||!pid||!aid){ fbErr('Compila tutti i campi!'); return; }
+  // Normalize database URL: must start with https:// and have no trailing slash
+  let dbUrl = url.trim().replace(/\/+$/, '');
+  if(!dbUrl.startsWith('https://')) dbUrl = 'https://' + dbUrl;
   try {
-    const app=initializeApp({apiKey:key,databaseURL:url,projectId:pid,appId:aid,authDomain:`${pid}.firebaseapp.com`});
+    const app=initializeApp({apiKey:key.trim(),databaseURL:dbUrl,projectId:pid,appId:aid,authDomain:`${pid}.firebaseapp.com`});
     db=getDatabase(app);
-    await get(ref(db,'.info/connected'));
-    localStorage.setItem('fb',JSON.stringify({key,url,pid,aid}));
+    // Test with a simple read
+    const connRef = ref(db, '.info/serverTimeOffset');
+    await get(connRef);
+    localStorage.setItem('fb',JSON.stringify({key:key.trim(),url:dbUrl,pid,aid}));
     showScreen('s-lg');
-  } catch(e){ fbErr('Errore: '+e.message); }
+  } catch(e){
+    // Try to give a more helpful error
+    if(e.message.includes('token')) fbErr('Database URL non valido. Assicurati di copiare il link completo dal Realtime Database di Firebase.');
+    else if(e.message.includes('permission')) fbErr('Permessi negati. Assicurati di aver selezionato "modalità test" nel Realtime Database.');
+    else fbErr('Errore connessione: '+e.message);
+  }
 };
 function fbErr(m){ const e=$('fb-err'); e.textContent=m; e.style.display='block'; }
 
@@ -517,7 +527,7 @@ function fbErr(m){ const e=$('fb-err'); e.textContent=m; e.style.display='block'
     const c=JSON.parse(s); sv('fb-key',c.key); sv('fb-url',c.url); sv('fb-pid',c.pid); sv('fb-aid',c.aid);
     const app=initializeApp({apiKey:c.key,databaseURL:c.url,projectId:c.pid,appId:c.aid,authDomain:`${c.pid}.firebaseapp.com`});
     db=getDatabase(app);
-    await get(ref(db,'.info/connected'));
+    await get(ref(db,'.info/serverTimeOffset'));
     showScreen('s-lg');
   } catch(_){}
 })();
