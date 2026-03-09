@@ -182,7 +182,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     </div>
     <div class="card">
       <h2>ACCESSO EDUCATORE</h2>
-      <button class="btn btn-purple btn-big" onclick="loginGM()">🎮 SONO UN EDUCATORE (GM)</button>
+      <button class="btn btn-purple btn-big" onclick="loginGM()">🎮 SONO UN EDUCATORE</button>
     </div>
   </div>
 </div>
@@ -383,8 +383,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <div class="card"><h2>I TUOI COMPLICI</h2><div id="pl-acc" class="dim">—</div></div>
         <div class="card">
           <h2>ELIMINA UN GIOCATORE</h2>
-          <div class="field"><select id="pl-ktgt"></select></div>
-          <button class="kb" id="pl-kb" onclick="plKill()">☠ ELIMINA</button>
+          <button class="kb" id="pl-kb" onclick="plKill()">☠ KILL</button>
           <div class="ct"><div class="cf" id="pl-cdf" style="width:0%"></div></div>
           <div class="dim ctr mt8" id="pl-cdt"></div>
         </div>
@@ -832,12 +831,9 @@ window.plToggle = (i,el) => {
 };
 
 window.plKill = async () => {
-  const target=gv('pl-ktgt'); if(!target||!gS.players?.[target]?.alive){alert('Giocatore non disponibile!');return;}
-  await update(ref(db,`games/${gCode}/players/${target}`),{alive:false});
-  await bcast({type:'kill',icon:'☠',title:'UN CREWMATE È CADUTO',body:'Un crewmate è stato eliminato nella zona!',color:'red'});
-  startCD(gS.config?.killCd||60);
+  startCD(gS.config?.killCd || 60);
 };
-
+  
 function startCD(secs){
   const btn=$('pl-kb'),fill=$('pl-cdf'),ctxt=$('pl-cdt');
   btn.disabled=true; let left=secs; fill.style.width='100%'; clearInterval(killCdIv);
