@@ -383,8 +383,6 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           <div class="pl mt8" id="pl-tt">0 / 0</div>
           <div style="margin-top:12px;">
             <div class="dim" style="margin-bottom:4px;">TASK GLOBALI (aggiornate a ogni riunione)</div>
-            <div class="pw"><div class="pf" id="pl-gtp" style="width:0%" style="background:linear-gradient(90deg,#ffc300,#ff3535)"></div></div>
-            <div class="pl" id="pl-gtt">— / —</div>
           </div>
           <div id="pl-tl" style="margin-top:10px"></div>
         </div>
@@ -832,11 +830,7 @@ function refreshPL(){
   const pct=gs.tasks?.total>0?Math.round(gs.tasks.done/gs.tasks.total*100):0;
   const snap = gs.taskSnapshot ?? null;
   if(snap !== null){
-    const gpct = gs.tasks?.total>0 ? Math.round(snap/gs.tasks.total*100) : 0;
-    $('pl-gtp').style.width = gpct+'%';
-    txt('pl-gtt', `${snap} / ${gs.tasks?.total||0}`);
-  }
-  $('pl-sp').style.width=pct+'%'; txt('pl-spt',`${gs.tasks?.done||0} / ${gs.tasks?.total||0}`);
+    
   setPhaseBar('pl-pb','pl-pt',gs.phase);
   htm('pl-pl',all.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span>${!p.alive?'<span class="badge b-ghost">👻</span>':''}</div>`).join(''));
 }
