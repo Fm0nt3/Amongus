@@ -801,7 +801,7 @@ function refreshPL(){
   const gpct = (snap !== null && gs.tasks?.total > 0) ? Math.round(snap/gs.tasks.total*100) : 0;
   $('pl-gtp').style.width = gpct+'%';
   txt('pl-gtt', snap !== null ? `${snap} / ${gs.tasks?.total||0}` : '— / —');
-}
+
   // role card
   if(me.role==='crewmate'){
     const rc=$('pl-rc'); rc.className='role-card rc-crew';
@@ -820,6 +820,7 @@ function refreshPL(){
     const alive=Object.values(gs.players).filter(p=>p.alive&&p.name!==myName);
     htm('pl-ktgt',alive.map(p=>`<option>${p.name}</option>`).join('')||'<option>Nessuno</option>');
   }
+}
 
   // status tab
   const all=Object.values(gs.players),alive2=all.filter(p=>p.alive);
