@@ -420,6 +420,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
   <div class="bnav">
     <div class="nb on" id="pnav-role"   onclick="plNav('role')">  <span class="ni">👤</span>RUOLO</div>
     <div class="nb"    id="pnav-status" onclick="plNav('status')"><span class="ni">📊</span>STATO</div>
+    <div class="nb"    id="pnav-meeting" onclick="plCallMeeting()"><span class="ni">📢</span>RIUNIONE</div>
   </div>
 </div>
 
@@ -832,6 +833,15 @@ window.plToggle = (i,el) => {
 
 window.plKill = async () => {
   startCD(gS.config?.killCd || 60);
+};
+
+window.plCallMeeting = async () => {
+  if(!gS?.started){ alert('Partita non iniziata!'); return; }
+  if(gS.phase !== 'exploration'){ alert('Puoi chiamare una riunione solo durante la fase di esplorazione!'); return; }
+  if(gS.commsBlocked){ alert('❌ Comunicazioni sospese!'); return; }
+  if(!confirm('Confermi di aver trovato un cadavere? Verrà convocata una riunione.')) return;
+  await update(gRef, { phase: 'meeting', votes:{} });
+  await bcast({ type:'meeting', icon:'📢', title:'RIUNIONE!', body:'È stato trovato un cadavere!\n\nTutti al Quartier Generale IMMEDIATAMENTE!', color:'blue' });
 };
   
 function startCD(secs){
