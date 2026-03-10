@@ -865,7 +865,7 @@ window.plCallMeeting = async () => {
   if(gS.phase !== 'exploration'){ alert('Puoi chiamare una riunione solo durante la fase di esplorazione!'); return; }
   if(gS.commsBlocked){ alert('❌ Comunicazioni sospese!'); return; }
   if(!confirm('Confermi di aver trovato un cadavere? Verrà convocata una riunione.')) return;
-  await update(gRef, { phase: 'meeting', votes:{} });
+  await update(gRef, { phase: 'meeting', votes:{}, taskSnapshot: gS.tasks?.done || 0 });
   await bcast({ type:'meeting', icon:'📢', title:'RIUNIONE!', body:'È stato trovato un cadavere!\n\nTutti al Quartier Generale IMMEDIATAMENTE!', color:'blue' });
 };
   
