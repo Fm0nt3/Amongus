@@ -383,6 +383,11 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           <div class="pl mt8" id="pl-tt">0 / 0</div>
           <div id="pl-tl" style="margin-top:10px"></div>
         </div>
+        <div class="card" id="pl-dead-card">
+          <h2>SEI STATO ELIMINATO?</h2>
+          <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">Premi solo se un impostore ti ha appena eliminato. Il GM verrà aggiornato automaticamente.</div>
+          <button class="kb" id="pl-dead-btn" onclick="plReportDeath()">💀 SONO MORTO</button>
+        </div>
       </div>
       <div id="pl-imp" style="display:none">
         <div class="card"><h2>I TUOI COMPLICI</h2><div id="pl-acc" class="dim">—</div></div>
@@ -606,9 +611,14 @@ window.gmStart = async () => {
 
 // ── GM LISTENER ────────────────────────────────────────────────────
 function listenGM(){
-  onValue(gRef,snap=>{ if(!snap.exists()) return; gS=snap.val(); refreshGM(); checkSabReq(); });
+  onValue(gRef,snap=>{ if(!snap.exists()) return; gS=snap.val(); refreshGM(); checkSabReq(); autoWinCheck(); });
 }
 
+async function autoWinCheck(){
+  if(!gS.pendingWinCheck) return;
+  await update(gRef,{pendingWinCheck:null});
+  await gmCheckWin();
+}
 function refreshGM(){
   const gs=gS; if(!gs?.players) return;
   const all=Object.values(gs.players),alive=all.filter(p=>p.alive),dead=all.filter(p=>!p.alive);
@@ -806,6 +816,10 @@ function refreshPL(){
     const rc=$('pl-rc'); rc.className='role-card rc-crew';
     rc.innerHTML='<span class="ri">🔵</span><div class="rt c-crew">CREWMATE</div><div class="rd">Completa le task e scopri gli impostori!<br>Non parlare durante la fase di esplorazione.</div>';
     sh('pl-tasks',true); sh('pl-imp',false); renderPLTasks(me);
+    const deadBtn=$('pl-dead-btn');
+    if(deadBtn) { deadBtn.disabled=!me.alive; deadBtn.textContent=me.alive?'💀 SONO MORTO':'👻 SEI GIÀ UN FANTASMA'; }
+    const deadCard=$('pl-dead-card');
+    if(deadCard) deadCard.style.display=me.alive?'block':'none';
   } else {
     const rc=$('pl-rc'); rc.className='role-card rc-imp';
     rc.innerHTML='<span class="ri">🔴</span><div class="rt c-imp">IMPOSTORE</div><div class="rd">Elimina i crewmate senza farti scoprire.<br>Simula di svolgere le task!</div>';
@@ -848,6 +862,14 @@ window.plKill = async () => {
   startCD(gS.config?.killCd || 60);
 };
 
+window.plReportDeath = async () => {
+  const me = gS?.players?.[myName];
+  if(!me?.alive) return;
+  if(!confirm('Confermi di essere stato eliminato da un impostore?')) return;
+  await update(ref(db,`games/${gCode}/players/${myName}`),{alive:false});
+  await update(ref(db,`games/${gCode}`),{pendingWinCheck: Date.now()});
+};
+  
 window.plCallMeeting = async () => {
   if(!gS?.started){ alert('Partita non iniziata!'); return; }
   if(gS.phase !== 'exploration'){ alert('Puoi chiamare una riunione solo durante la fase di esplorazione!'); return; }
