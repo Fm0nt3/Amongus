@@ -732,8 +732,11 @@ window.gmMeeting = async () => {
     await update(ref(db,`games/${gCode}/meetings`),{free:(gs.meetings?.free||0)+1});
   }
   const body=gv('meet-body');
-  await update(gRef, { phase: 'meeting', votes:{}, taskSnapshot: gs.tasks?.done || 0 });
-  await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:reason==='body'?`Cadavere trovato: ${body}\n\nTutti al QG IMMEDIATAMENTE!`:'Riunione di emergenza!\n\nTutti al QG IMMEDIATAMENTE!',color:'blue'});
+  // Calcola task completate sommando tasksDone di tutti i crewmate
+  const allPlayers=Object.values(gs.players||{});
+  const totalDone=allPlayers.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
+  await update(ref(db,`games/${gCode}/tasks`),{done:totalDone});
+  await update(gRef, { phase: 'meeting', votes:{}, taskSnapshot: totalDone });  await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:reason==='body'?`Cadavere trovato: ${body}\n\nTutti al QG IMMEDIATAMENTE!`:'Riunione di emergenza!\n\nTutti al QG IMMEDIATAMENTE!',color:'blue'});
   gmLog(`📢 Riunione — ${reason==='body'?'cadavere: '+body:'libera'}`,'blue');
   sh('meet-live',true);
   let s=gs.config?.disc||180; updMeetT(s); clearInterval(meetIv);
@@ -875,7 +878,10 @@ window.plCallMeeting = async () => {
   if(gS.phase !== 'exploration'){ alert('Puoi chiamare una riunione solo durante la fase di esplorazione!'); return; }
   if(gS.commsBlocked){ alert('❌ Comunicazioni sospese!'); return; }
   if(!confirm('Confermi di aver trovato un cadavere? Verrà convocata una riunione.')) return;
-  await update(gRef, { phase: 'meeting', votes:{}, taskSnapshot: gS.tasks?.done || 0 });
+  const allP=Object.values(gS.players||{});
+  const totDone=allP.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
+  await update(ref(db,`games/${gCode}/tasks`),{done:totDone});
+  await update(gRef, { phase: 'meeting', votes:{}, taskSnapshot: totDone });
   await bcast({ type:'meeting', icon:'📢', title:'RIUNIONE!', body:'È stato trovato un cadavere!\n\nTutti al Quartier Generale IMMEDIATAMENTE!', color:'blue' });
 };
   
