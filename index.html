@@ -852,6 +852,11 @@ function startCD(secs){
 
 window.plSab = async type => {
   if(type === 'yellow' && gS.commsBlocked){ alert('Comunicazioni già sospese!'); return; }
+  const lastSab = gS.lastSabotage || 0;
+  const cooldown = 120; // secondi
+  const elapsed = Math.floor((Date.now() - lastSab) / 1000);
+  if(elapsed < cooldown){ alert(`⏱ Devi aspettare ancora ${cooldown - elapsed} secondi prima del prossimo sabotaggio!`); return; }
+  await update(gRef, { lastSabotage: Date.now() });
   if(type === 'red') {
     await update(gRef, { phase: 'emergency' });
     await bcast({ type:'emergency_red', icon:'🚨', title:'CODICE ROSSO', body:'EMERGENZA CRITICA!\n\nRecati al Quartier Generale per ricevere istruzioni!', color:'red' });
@@ -859,8 +864,7 @@ window.plSab = async type => {
     await update(gRef, { commsBlocked: true });
     await bcast({ type:'emergency_yellow', icon:'📡', title:'CODICE GIALLO', body:'Comunicazioni sospese!\n\nRiunioni libere bloccate fino alla risoluzione.', color:'yellow' });
   }
-};
-  
+};  
 // alerts
 function procAlerts(){
   const alerts=gS.alerts; if(!alerts) return;
