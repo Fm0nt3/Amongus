@@ -366,6 +366,11 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
   <div class="plbody">
     <!-- tab ruolo -->
     <div id="pt-role">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="dim" style="margin-bottom:4px;">TASK GLOBALI (aggiornate a ogni riunione)</div>
+        <div class="pw"><div class="pf" id="pl-gtp" style="width:0%"></div></div>
+        <div class="pl" id="pl-gtt">— / —</div>
+      </div>
       <div class="role-card rc-wait" id="pl-rc">
         <span class="ri">⏳</span>
         <div class="rt c-dim">IN ATTESA</div>
@@ -797,6 +802,10 @@ function refreshPL(){
   txt('pl-name',`${me.color} ${me.name}`);
   txt('pl-stat',!gs.started?'In attesa...':!me.alive?'👻 Fantasma':me.role==='impostor'?'🔴 Impostore':'🔵 Crewmate');
   if(!gs.started) return;
+  const snap = gs.taskSnapshot ?? null;
+  const gpct = (snap !== null && gs.tasks?.total > 0) ? Math.round(snap/gs.tasks.total*100) : 0;
+  $('pl-gtp').style.width = gpct+'%';
+  txt('pl-gtt', snap !== null ? `${snap} / ${gs.tasks?.total||0}` : '— / —');
 
   // role card
   if(me.role==='crewmate'){
