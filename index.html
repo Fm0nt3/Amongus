@@ -820,7 +820,7 @@ function refreshPL(){
     const alive=Object.values(gs.players).filter(p=>p.alive&&p.name!==myName);
     htm('pl-ktgt',alive.map(p=>`<option>${p.name}</option>`).join('')||'<option>Nessuno</option>');
   }
-}
+
 
   // status tab
   const all=Object.values(gs.players),alive2=all.filter(p=>p.alive);
@@ -831,6 +831,7 @@ function refreshPL(){
     
   setPhaseBar('pl-pb','pl-pt',gs.phase);
   htm('pl-pl',all.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span>${!p.alive?'<span class="badge b-ghost">👻</span>':''}</div>`).join(''));
+  }
 }
 
 function renderPLTasks(me){
