@@ -376,6 +376,11 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           <h2>LE TUE TASK</h2>
           <div class="pw"><div class="pf" id="pl-tp" style="width:0%"></div></div>
           <div class="pl mt8" id="pl-tt">0 / 0</div>
+          <div style="margin-top:12px;">
+            <div class="dim" style="margin-bottom:4px;">TASK GLOBALI (aggiornate a ogni riunione)</div>
+            <div class="pw"><div class="pf" id="pl-gtp" style="width:0%" style="background:linear-gradient(90deg,#ffc300,#ff3535)"></div></div>
+            <div class="pl" id="pl-gtt">— / —</div>
+          </div>
           <div id="pl-tl" style="margin-top:10px"></div>
         </div>
       </div>
@@ -717,7 +722,7 @@ window.gmMeeting = async () => {
     await update(ref(db,`games/${gCode}/meetings`),{free:(gs.meetings?.free||0)+1});
   }
   const body=gv('meet-body');
-  await update(gRef,{phase:'meeting',votes:{}});
+  await update(gRef, { phase: 'meeting', votes:{}, taskSnapshot: gs.tasks?.done || 0 });
   await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:reason==='body'?`Cadavere trovato: ${body}\n\nTutti al QG IMMEDIATAMENTE!`:'Riunione di emergenza!\n\nTutti al QG IMMEDIATAMENTE!',color:'blue'});
   gmLog(`📢 Riunione — ${reason==='body'?'cadavere: '+body:'libera'}`,'blue');
   sh('meet-live',true);
@@ -816,6 +821,12 @@ function refreshPL(){
   const all=Object.values(gs.players),alive2=all.filter(p=>p.alive);
   txt('pl-al',alive2.length); txt('pl-de',all.length-alive2.length); txt('pl-tk',gs.tasks?.done||0);
   const pct=gs.tasks?.total>0?Math.round(gs.tasks.done/gs.tasks.total*100):0;
+  const snap = gs.taskSnapshot ?? null;
+  if(snap !== null){
+    const gpct = gs.tasks?.total>0 ? Math.round(snap/gs.tasks.total*100) : 0;
+    $('pl-gtp').style.width = gpct+'%';
+    txt('pl-gtt', `${snap} / ${gs.tasks?.total||0}`);
+  }
   $('pl-sp').style.width=pct+'%'; txt('pl-spt',`${gs.tasks?.done||0} / ${gs.tasks?.total||0}`);
   setPhaseBar('pl-pb','pl-pt',gs.phase);
   htm('pl-pl',all.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span>${!p.alive?'<span class="badge b-ghost">👻</span>':''}</div>`).join(''));
