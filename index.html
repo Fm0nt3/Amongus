@@ -389,7 +389,6 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         </div>
         <div class="card">
           <h2>SABOTAGGI</h2>
-          <div class="msg msg-yellow" style="margin-bottom:10px;font-size:.75rem">⚠ Dopo aver premuto, l'educatore riceverà la richiesta e attiverà il sabotaggio.</div>
           <button class="sb sb-r" onclick="plSab('red')">
             <span class="si">🚨</span>
             <div><div class="stit">CODICE ROSSO</div><div class="sds">Emergenza critica — tutti devono correre a risolvere</div></div>
@@ -398,6 +397,8 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
             <span class="si">📡</span>
             <div><div class="stit">CODICE GIALLO</div><div class="sds">Blocca le comunicazioni — niente riunioni libere</div></div>
           </button>
+          <div class="ct"><div class="cf" id="sab-cdf" style="width:0%"></div></div>
+          <div class="dim ctr mt8" id="sab-cdt"></div>
         </div>
       </div>
     </div>
@@ -850,6 +851,18 @@ function startCD(secs){
   killCdIv=setInterval(()=>{left--;fill.style.width=Math.round(left/secs*100)+'%';txt('pl-cdt',`Cooldown: ${left}s`);if(left<=0){clearInterval(killCdIv);btn.disabled=false;fill.style.width='0%';txt('pl-cdt','Pronto!');}},1000);
 }
 
+let sabCdIv;
+function startSabCD(secs){
+  const fill=$('sab-cdf'), ctxt=$('sab-cdt');
+  let left=secs; fill.style.width='100%'; clearInterval(sabCdIv);
+  sabCdIv=setInterval(()=>{
+    left--;
+    fill.style.width=Math.round(left/secs*100)+'%';
+    txt('sab-cdt',`Prossimo sabotaggio: ${left}s`);
+    if(left<=0){ clearInterval(sabCdIv); fill.style.width='0%'; txt('sab-cdt','Pronto!'); }
+  },1000);
+}
+  
 window.plSab = async type => {
   if(type === 'yellow' && gS.commsBlocked){ alert('Comunicazioni già sospese!'); return; }
   const lastSab = gS.lastSabotage || 0;
@@ -857,6 +870,7 @@ window.plSab = async type => {
   const elapsed = Math.floor((Date.now() - lastSab) / 1000);
   if(elapsed < cooldown){ alert(`⏱ Devi aspettare ancora ${cooldown - elapsed} secondi prima del prossimo sabotaggio!`); return; }
   await update(gRef, { lastSabotage: Date.now() });
+  startSabCD(cooldown);
   if(type === 'red') {
     await update(gRef, { phase: 'emergency' });
     await bcast({ type:'emergency_red', icon:'🚨', title:'CODICE ROSSO', body:'EMERGENZA CRITICA!\n\nRecati al Quartier Generale per ricevere istruzioni!', color:'red' });
