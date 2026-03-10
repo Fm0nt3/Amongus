@@ -802,6 +802,10 @@ function refreshPL(){
     const rc=$('pl-rc'); rc.className='role-card rc-imp';
     rc.innerHTML='<span class="ri">🔴</span><div class="rt c-imp">IMPOSTORE</div><div class="rd">Elimina i crewmate senza farti scoprire.<br>Simula di svolgere le task!</div>';
     sh('pl-tasks',false); sh('pl-imp',true);
+    const lastSab = gs.lastSabotage || 0;
+    const elapsed = Math.floor((Date.now() - lastSab) / 1000);
+    const sabCd = 120;
+    if(elapsed < sabCd && lastSab > 0) startSabCD(sabCd - elapsed);
     const acc=me.accomplices||[];
     htm('pl-acc',acc.length?acc.map(n=>{const p=gs.players[n];return`<span style="color:#ff4444">${p?.color||''} ${n}</span>`}).join(', '):'<span class="dim">Sei l\'unico impostore.</span>');
     const alive=Object.values(gs.players).filter(p=>p.alive&&p.name!==myName);
