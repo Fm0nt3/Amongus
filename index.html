@@ -29,6 +29,7 @@ select option{background:#0e1c2e}
 .btn-sm{width:auto;display:inline-block;padding:7px 14px;font-size:.78rem;margin:0}
 .btn-big{padding:15px;font-family:'Orbitron',monospace;font-size:.9rem;letter-spacing:.08em;font-weight:700}
 .btn:disabled{opacity:.3;cursor:not-allowed}
+.sb:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
 .row{display:flex;gap:8px}.row .btn{flex:1;margin:0}
 .msg{padding:10px 12px;border-radius:4px;font-size:.8rem;line-height:1.5;margin-bottom:10px;border:1px solid}
 .msg-red{background:rgba(255,53,53,.08);border-color:rgba(255,53,53,.4);color:#ff9999}
@@ -1039,16 +1040,21 @@ function startCD(secs){
 
 let sabCdIv;
 function startSabCD(secs){
-  const fill=$('sab-cdf'), ctxt=$('sab-cdt');
+  const fill=$('sab-cdf'), btns=document.querySelectorAll('.sb');
   let left=secs; fill.style.width='100%'; clearInterval(sabCdIv);
+  btns.forEach(b=>b.disabled=true);
   sabCdIv=setInterval(()=>{
     left--;
     fill.style.width=Math.round(left/secs*100)+'%';
     txt('sab-cdt',`Prossimo sabotaggio: ${left}s`);
-    if(left<=0){ clearInterval(sabCdIv); fill.style.width='0%'; txt('sab-cdt','Pronto!'); }
+    if(left<=0){
+      clearInterval(sabCdIv);
+      fill.style.width='0%';
+      txt('sab-cdt','Pronto!');
+      btns.forEach(b=>b.disabled=false);
+    }
   },1000);
-}
-  
+}  
 window.plSab = async type => {
   if(type === 'yellow' && gS.commsBlocked){ alert('Comunicazioni già sospese!'); return; }
   if((type === 'oxygen' || type === 'reactor') && gS.activeEmergency?.type){ alert('Emergenza già in corso!'); return; }
