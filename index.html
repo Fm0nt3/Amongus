@@ -857,7 +857,7 @@ window.gmEject = async () => {
   const p=gS.players?.[name]; const isI=p?.role==='impostor';
   await update(ref(db,`games/${gCode}/players/${name}`),{alive:false});
   await bcast({type:'eject',icon:'⚖',title:`${name} ESPULSO`,body:`Era un ${isI?'🔴 IMPOSTORE':'🔵 CREWMATE'}!`,color:isI?'red':'blue'});
-  await update(gRef,{phase:'exploration'});
+  await restorePendingEmergency() || await update(gRef,{phase:'exploration'});
   sh('meet-live',false);
   gmLog(`⚖ ${name} espulso — era ${p?.role}`,isI?'red':'blue');
   await gmCheckWin();
@@ -900,7 +900,27 @@ async function gmResolveEmergency(){
   await update(gRef,{ activeEmergency:null, phase:'exploration' });
   await bcast({ type:'resolved', icon:'✅', title:'EMERGENZA RISOLTA', body:'Sistemi ripristinati. Riprende la fase di esplorazione.', color:'green' });
   gmLog('✓ Emergenza risolta','green');
-}window.gmLaunchYellow = async () => {
+}
+
+async function restorePendingEmergency(){
+  const pending = gS.pendingEmergency;
+  if(!pending) return;
+  const restored = { ...pending, startTs: Date.now() };
+  await update(gRef, { activeEmergency: restored, pendingEmergency: null, phase: 'emergency' });
+  await bcast({
+    type:'emergency_red',
+    icon: restored.type==='oxygen' ? '🫁' : '⚛️',
+    title: restored.type==='oxygen' ? 'OSSIGENO IN ESAURIMENTO' : 'REATTORE IN SOVRACCARICO',
+    body: restored.type==='oxygen'
+      ? 'La riunione è finita — torna subito alla tua postazione ossigeno!'
+      : 'La riunione è finita — torna subito alla postazione reattore!',
+    color:'red'
+  });
+  if(restored.type==='oxygen') startOxyCodes();
+  emergencyFailed = false;
+}
+  
+window.gmLaunchYellow = async () => {
   const room=gv('yel-room')||'???',act=gv('yel-act')||'???';
   await update(gRef,{commsBlocked:true});
   await bcast({type:'emergency_yellow',icon:'📡',title:'CODICE GIALLO',body:`Comunicazioni sospese!\n\nRecati in: ${room}\nCosa fare: ${act}`,color:'yellow'});
@@ -968,12 +988,13 @@ window.gmResolveVote = async () => {
   }
   if(tied||!maxN||maxN==='__skip__'||maxV===0){
     await bcast({type:'vote_result',icon:'⚖',title:'NESSUNA ESPULSIONE',body:'Pareggio o astensione. La partita riprende.',color:'blue'});
-    await update(gRef,{phase:'exploration'}); gmLog('Voto: nessuna espulsione','yellow');
+    await restorePendingEmergency() || await update(gRef,{phase:'exploration'});
+    gmLog('Voto: nessuna espulsione','yellow');
   } else {
     const p=gS.players[maxN],isI=p?.role==='impostor';
     await update(ref(db,`games/${gCode}/players/${maxN}`),{alive:false});
     await bcast({type:'eject',icon:'⚖',title:`${maxN} ESPULSO (${maxV} voti)`,body:`Era un ${isI?'🔴 IMPOSTORE':'🔵 CREWMATE'}!`,color:isI?'red':'blue'});
-    await update(gRef,{phase:'exploration'});
+    await restorePendingEmergency() || await update(gRef,{phase:'exploration'});
     gmLog(`⚖ ${maxN} espulso — era ${p?.role}`,isI?'red':'blue'); await gmCheckWin();
   }
   sh('meet-live',false);
@@ -1086,12 +1107,16 @@ window.plCallMeeting = async () => {
   if(!gS?.started){ alert('Partita non iniziata!'); return; }
   if(gS.phase !== 'exploration'){ alert('Puoi chiamare una riunione solo durante la fase di esplorazione!'); return; }
   if(gS.commsBlocked){ alert('❌ Comunicazioni sospese!'); return; }
-  if(gS.activeEmergency){ alert('❌ Impossibile chiamare una riunione durante un\'emergenza!'); return; }
   if(!confirm('Confermi di aver trovato un cadavere? Verrà convocata una riunione.')) return;
   const allP=Object.values(gS.players||{});
   const totDone=allP.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
   await update(ref(db,`games/${gCode}/tasks`),{done:totDone});
-  await update(gRef, { phase: 'meeting', votes:{}, taskSnapshot: totDone });
+  // Se c'era un'emergenza attiva, salvala per ripristinarla dopo
+  const pendingEm = gS.activeEmergency ? {
+    ...gS.activeEmergency,
+    startTs: null  // verrà reimpostato dopo la riunione
+  } : null;
+  await update(gRef, { phase:'meeting', votes:{}, taskSnapshot:totDone, pendingEmergency: pendingEm, activeEmergency:null });
   await bcast({ type:'meeting', icon:'📢', title:'RIUNIONE!', body:'È stato trovato un cadavere!\n\nTutti al Quartier Generale IMMEDIATAMENTE!', color:'blue' });
 };
   
