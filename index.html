@@ -201,9 +201,11 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     <div class="tab"     onclick="gmTab(2)">GIOCATORI</div>
     <div class="tab"     onclick="gmTab(3)">EMERGENZE</div>
     <div class="tab"     onclick="gmTab(4)">RIUNIONE</div>
-    <div class="tab"     onclick="gmTab(5)">POST.1</div>
-    <div class="tab"     onclick="gmTab(6)">POST.2</div>
-    <div class="tab"     onclick="gmTab(7)">LOG</div>
+    <div class="tab"     onclick="gmTab(6)">OSS.1</div>
+    <div class="tab"     onclick="gmTab(7)">OSS.2</div>
+    <div class="tab"     onclick="gmTab(8)">REA.1</div>
+    <div class="tab"     onclick="gmTab(9)">REA.2</div>
+    <div class="tab"     onclick="gmTab(5)">LOG</div>
   </div>
 
   <!-- T0 QG -->
@@ -318,11 +320,6 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     <div class="card" id="em-reactor" style="display:none">
       <h2>⚛️ REATTORE IN SOVRACCARICO</h2>
       <div class="bt tr" id="em-rea-td">45</div>
-      <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">Due postazioni devono confermare simultaneamente entro 5 secondi l'una dall'altra.</div>
-      <div class="row" style="margin-bottom:12px">
-        <button class="btn btn-green" id="rea-btn1" onclick="gmReaConfirm(1)">✋ POSTAZIONE 1</button>
-        <button class="btn btn-green" id="rea-btn2" onclick="gmReaConfirm(2)">✋ POSTAZIONE 2</button>
-      </div>
       <div class="msg msg-yellow" id="rea-status" style="font-size:.78rem">In attesa delle due conferme...</div>
       <button class="btn btn-red mt8" onclick="gmFailEmergency()">✗ DICHIARA FALLITA</button>
     </div>
@@ -407,6 +404,38 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           <button class="btn btn-green btn-sm" onclick="gmOxyCheck(2)">✓</button>
         </div>
         <div class="msg msg-green mt8" id="post2-ok" style="display:none;text-align:center">✓ POSTAZIONE 2 CONFERMATA</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- T8 REATTORE POSTAZIONE 1 -->
+  <div class="tp" id="t8">
+    <div class="card" id="rea1-idle">
+      <div class="msg msg-blue" style="font-size:.78rem">Nessuna emergenza reattore in corso.</div>
+    </div>
+    <div id="rea1-active" style="display:none">
+      <div class="card">
+        <h2>⚛️ REATTORE — POSTAZIONE 1</h2>
+        <div class="dim ctr" style="margin-bottom:8px">Tieni premuto il pulsante finché anche l'altra postazione conferma</div>
+        <div class="bt tr" id="rea1-td" style="font-size:2rem;padding:8px">—</div>
+        <button class="kb mt8" id="rea1-btn" onclick="gmReaConfirm(1)">✋ TIENI PREMUTO</button>
+        <div class="msg msg-green mt8" id="rea1-ok" style="display:none;text-align:center">✓ POSTAZIONE 1 CONFERMATA</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- T9 REATTORE POSTAZIONE 2 -->
+  <div class="tp" id="t9">
+    <div class="card" id="rea2-idle">
+      <div class="msg msg-blue" style="font-size:.78rem">Nessuna emergenza reattore in corso.</div>
+    </div>
+    <div id="rea2-active" style="display:none">
+      <div class="card">
+        <h2>⚛️ REATTORE — POSTAZIONE 2</h2>
+        <div class="dim ctr" style="margin-bottom:8px">Tieni premuto il pulsante finché anche l'altra postazione conferma</div>
+        <div class="bt tr" id="rea2-td" style="font-size:2rem;padding:8px">—</div>
+        <button class="kb mt8" id="rea2-btn" onclick="gmReaConfirm(2)">✋ TIENI PREMUTO</button>
+        <div class="msg msg-green mt8" id="rea2-ok" style="display:none;text-align:center">✓ POSTAZIONE 2 CONFERMATA</div>
       </div>
     </div>
   </div>
@@ -708,7 +737,11 @@ function tickEmergencyTimer(){
     txt('post1-td', left+'s');
     txt('post2-td', left+'s');
   }
-  if(em.type==='reactor') txt('em-rea-td', left+'s');
+  if(em.type==='reactor'){
+    txt('em-rea-td', left+'s');
+    txt('rea1-td', left+'s');
+    txt('rea2-td', left+'s');
+  }
   if(left<=0 && !gS.victory) autoFailEmergency();
 }
 let oxyCodeIv;
@@ -780,6 +813,20 @@ function refreshGM(){
       } else {
         txt('rea-status', em.confirm1?'⏳ Postazione 1 OK — attesa postazione 2...': em.confirm2?'⏳ Postazione 2 OK — attesa postazione 1...':'In attesa delle due conferme...');
       }
+      // Aggiorna le tab postazioni reattore
+      const reaActive = !!(em && em.type==='reactor');
+      sh('rea1-idle', !reaActive); sh('rea1-active', reaActive);
+      sh('rea2-idle', !reaActive); sh('rea2-active', reaActive);
+      if(reaActive){
+        sh('rea1-ok', !!em.confirm1); sh('rea2-ok', !!em.confirm2);
+        if(em.confirm1) $('rea1-btn').disabled = true;
+        if(em.confirm2) $('rea2-btn').disabled = true;
+        if(!em.confirm1) $('rea1-btn').disabled = false;
+        if(!em.confirm2) $('rea2-btn').disabled = false;
+      }
+    } else {
+      sh('rea1-idle', true); sh('rea1-active', false);
+      sh('rea2-idle', true); sh('rea2-active', false);
     }
   }
 }
