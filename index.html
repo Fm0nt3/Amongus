@@ -598,8 +598,9 @@ window.gmStart = async () => {
       tasks:imp?[]:shuffle([...TASKS]).slice(0,tEach),accomplices:imp?[...imps].filter(n=>n!==p.name):[]};
   });
 
+  const realTotal = gmPL.filter(p=>!imps.has(p.name)).reduce((_,__)=>_+tEach,0);
   await set(gRef,{code,started:true,phase:'exploration',
-    tasks:{done:0,total:totT},meetings:{free:0,maxFree:fmeet,total:0},
+    tasks:{done:0,total:realTotal},meetings:{free:0,maxFree:fmeet,total:0},
     config:{impN,disc,killCd,fmeet},players,alerts:{},votes:{},
     sabRequest:null,commsBlocked:false,victory:null});
 
