@@ -199,9 +199,9 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     <div class="tab"     onclick="gmTab(2)">GIOCATORI</div>
     <div class="tab"     onclick="gmTab(3)">EMERGENZE</div>
     <div class="tab"     onclick="gmTab(4)">RIUNIONE</div>
-    <div class="tab"     onclick="gmTab(5)">LOG</div>
-    <div class="tab"     onclick="gmTab(6)">POST.1</div>
-    <div class="tab"     onclick="gmTab(7)">POST.2</div>
+    <div class="tab"     onclick="gmTab(5)">POST.1</div>
+    <div class="tab"     onclick="gmTab(6)">POST.2</div>
+    <div class="tab"     onclick="gmTab(7)">LOG</div>
   </div>
 
   <!-- T0 QG -->
@@ -379,7 +379,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <h2>🫁 POSTAZIONE 1 — OSSIGENO</h2>
         <div class="dim ctr" style="margin-bottom:8px">Inserisci il codice che vedi qui sotto</div>
         <div style="font-family:'Orbitron',monospace;font-size:3rem;color:#ffc300;text-align:center;padding:16px;background:#060f1a;border-radius:6px;margin-bottom:12px" id="post1-code">—</div>
-        <div class="dim ctr" id="post1-cd" style="margin-bottom:12px">—</div>
+        <div class="bt tr" id="post1-td" style="font-size:2rem;padding:8px">—</div>
         <div style="display:flex;gap:8px">
           <input id="post1-in" placeholder="inserisci codice" style="flex:1;font-size:1.2rem;text-align:center;letter-spacing:.2em">
           <button class="btn btn-green btn-sm" onclick="gmOxyCheck(1)">✓</button>
@@ -399,7 +399,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <h2>🫁 POSTAZIONE 2 — OSSIGENO</h2>
         <div class="dim ctr" style="margin-bottom:8px">Inserisci il codice che vedi qui sotto</div>
         <div style="font-family:'Orbitron',monospace;font-size:3rem;color:#ffc300;text-align:center;padding:16px;background:#060f1a;border-radius:6px;margin-bottom:12px" id="post2-code">—</div>
-        <div class="dim ctr" id="post2-cd" style="margin-bottom:12px">—</div>
+        <div class="bt tr" id="post2-td" style="font-size:2rem;padding:8px">—</div>
         <div style="display:flex;gap:8px">
           <input id="post2-in" placeholder="inserisci codice" style="flex:1;font-size:1.2rem;text-align:center;letter-spacing:.2em">
           <button class="btn btn-green btn-sm" onclick="gmOxyCheck(2)">✓</button>
@@ -688,11 +688,14 @@ function tickEmergencyTimer(){
   const em = gS.activeEmergency;
   const elapsed = Math.floor((Date.now() - em.startTs) / 1000);
   const left = Math.max(0, em.duration - elapsed);
-  if(em.type==='oxygen') txt('em-oxy-td', left+'s');
+  if(em.type==='oxygen'){
+    txt('em-oxy-td', left+'s');
+    txt('post1-td', left+'s');
+    txt('post2-td', left+'s');
+  }
   if(em.type==='reactor') txt('em-rea-td', left+'s');
   if(left<=0 && !gS.victory) autoFailEmergency();
 }
-
 let oxyCodeIv;
 function startOxyCodes(){
   clearInterval(oxyCodeIv);
@@ -1059,7 +1062,7 @@ window.plSab = async type => {
     emergencyFailed = false;
     await update(gRef, { phase:'emergency', activeEmergency:{ type:'oxygen', startTs:Date.now(), duration:45, code1:'0000', code2:'0000', done1:false, done2:false }});
     startOxyCodes();
-    await bcast({ type:'emergency_red', icon:'🫁', title:'OSSIGENO IN ESAURIMENTO', body:`Inserire i codici nelle due postazioni entro 45 secondi!\n\nPostazione 1: ${c1}\nPostazione 2: ${c2}`, color:'red' });
+    await bcast({ type:'emergency_red', icon:'🫁', title:'OSSIGENO IN ESAURIMENTO', body:'Recati subito alla tua postazione e inserisci il codice entro 45 secondi!', color:'red' });
   } else if(type === 'reactor') {
     emergencyFailed = false;
     await update(gRef, { phase:'emergency', activeEmergency:{ type:'reactor', startTs:Date.now(), duration:45, confirm1:false, confirm2:false }});
