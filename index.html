@@ -200,6 +200,8 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     <div class="tab"     onclick="gmTab(3)">EMERGENZE</div>
     <div class="tab"     onclick="gmTab(4)">RIUNIONE</div>
     <div class="tab"     onclick="gmTab(5)">LOG</div>
+    <div class="tab"     onclick="gmTab(6)">POST.1</div>
+    <div class="tab"     onclick="gmTab(7)">POST.2</div>
   </div>
 
   <!-- T0 QG -->
@@ -295,13 +297,18 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     <div class="card" id="em-oxygen" style="display:none">
       <h2>🫁 OSSIGENO IN ESAURIMENTO</h2>
       <div class="bt tr" id="em-oxy-td">45</div>
-      <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">I crewmate devono inserire i codici corretti in entrambe le postazioni.</div>
-      <div class="field"><label>CODICE POSTAZIONE 1 <span id="oxy-s1" style="color:#00ff88"></span></label>
-        <div style="display:flex;gap:8px"><input id="oxy-in1" placeholder="es. 1234" style="flex:1"><button class="btn btn-green btn-sm" onclick="gmOxyCheck(1)">✓</button></div>
+      <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">I codici cambiano ogni 10 secondi. I crewmate devono inserire il codice attivo nella loro postazione.</div>
+      <div class="field">
+        <label>CODICE POSTAZIONE 1 <span id="oxy-s1" style="color:#00ff88"></span></label>
+        <div style="font-family:'Orbitron',monospace;font-size:2rem;color:#ffc300;text-align:center;padding:10px;background:#060f1a;border-radius:4px;margin-bottom:6px" id="oxy-code1">—</div>
+        <div style="display:flex;gap:8px"><input id="oxy-in1" placeholder="inserisci codice" style="flex:1"><button class="btn btn-green btn-sm" onclick="gmOxyCheck(1)">✓</button></div>
       </div>
-      <div class="field"><label>CODICE POSTAZIONE 2 <span id="oxy-s2" style="color:#00ff88"></span></label>
-        <div style="display:flex;gap:8px"><input id="oxy-in2" placeholder="es. 5678" style="flex:1"><button class="btn btn-green btn-sm" onclick="gmOxyCheck(2)">✓</button></div>
+      <div class="field">
+        <label>CODICE POSTAZIONE 2 <span id="oxy-s2" style="color:#00ff88"></span></label>
+        <div style="font-family:'Orbitron',monospace;font-size:2rem;color:#ffc300;text-align:center;padding:10px;background:#060f1a;border-radius:4px;margin-bottom:6px" id="oxy-code2">—</div>
+        <div style="display:flex;gap:8px"><input id="oxy-in2" placeholder="inserisci codice" style="flex:1"><button class="btn btn-green btn-sm" onclick="gmOxyCheck(2)">✓</button></div>
       </div>
+      <div class="dim ctr" id="oxy-cd">Prossimo cambio: 10s</div>
       <button class="btn btn-red mt8" onclick="gmFailEmergency()">✗ DICHIARA FALLITA</button>
     </div>
 
@@ -362,6 +369,46 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     </div>
   </div>
 
+  <!-- T6 POSTAZIONE 1 -->
+  <div class="tp" id="t6">
+    <div class="card" id="post1-idle">
+      <div class="msg msg-blue" style="font-size:.78rem">Nessuna emergenza ossigeno in corso.</div>
+    </div>
+    <div id="post1-active" style="display:none">
+      <div class="card">
+        <h2>🫁 POSTAZIONE 1 — OSSIGENO</h2>
+        <div class="dim ctr" style="margin-bottom:8px">Inserisci il codice che vedi qui sotto</div>
+        <div style="font-family:'Orbitron',monospace;font-size:3rem;color:#ffc300;text-align:center;padding:16px;background:#060f1a;border-radius:6px;margin-bottom:12px" id="post1-code">—</div>
+        <div class="dim ctr" id="post1-cd" style="margin-bottom:12px">—</div>
+        <div style="display:flex;gap:8px">
+          <input id="post1-in" placeholder="inserisci codice" style="flex:1;font-size:1.2rem;text-align:center;letter-spacing:.2em">
+          <button class="btn btn-green btn-sm" onclick="gmOxyCheck(1)">✓</button>
+        </div>
+        <div class="msg msg-green mt8" id="post1-ok" style="display:none;text-align:center">✓ POSTAZIONE 1 CONFERMATA</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- T7 POSTAZIONE 2 -->
+  <div class="tp" id="t7">
+    <div class="card" id="post2-idle">
+      <div class="msg msg-blue" style="font-size:.78rem">Nessuna emergenza ossigeno in corso.</div>
+    </div>
+    <div id="post2-active" style="display:none">
+      <div class="card">
+        <h2>🫁 POSTAZIONE 2 — OSSIGENO</h2>
+        <div class="dim ctr" style="margin-bottom:8px">Inserisci il codice che vedi qui sotto</div>
+        <div style="font-family:'Orbitron',monospace;font-size:3rem;color:#ffc300;text-align:center;padding:16px;background:#060f1a;border-radius:6px;margin-bottom:12px" id="post2-code">—</div>
+        <div class="dim ctr" id="post2-cd" style="margin-bottom:12px">—</div>
+        <div style="display:flex;gap:8px">
+          <input id="post2-in" placeholder="inserisci codice" style="flex:1;font-size:1.2rem;text-align:center;letter-spacing:.2em">
+          <button class="btn btn-green btn-sm" onclick="gmOxyCheck(2)">✓</button>
+        </div>
+        <div class="msg msg-green mt8" id="post2-ok" style="display:none;text-align:center">✓ POSTAZIONE 2 CONFERMATA</div>
+      </div>
+    </div>
+  </div>
+  
   <!-- T5 LOG -->
   <div class="tp" id="t5">
     <div class="card">
@@ -634,6 +681,33 @@ window.gmStart = async () => {
 // ── GM LISTENER ────────────────────────────────────────────────────
 function listenGM(){
   onValue(gRef,snap=>{ if(!snap.exists()) return; gS=snap.val(); refreshGM(); checkSabReq(); autoWinCheck(); });
+  setInterval(()=>{ if(gS.activeEmergency) tickEmergencyTimer(); }, 1000);
+}
+
+function tickEmergencyTimer(){
+  const em = gS.activeEmergency;
+  const elapsed = Math.floor((Date.now() - em.startTs) / 1000);
+  const left = Math.max(0, em.duration - elapsed);
+  if(em.type==='oxygen') txt('em-oxy-td', left+'s');
+  if(em.type==='reactor') txt('em-rea-td', left+'s');
+  if(left<=0 && !gS.victory) autoFailEmergency();
+}
+
+let oxyCodeIv;
+function startOxyCodes(){
+  clearInterval(oxyCodeIv);
+  let countdown = 10;
+  function regen(){
+    const c1=Math.floor(1000+Math.random()*8999), c2=Math.floor(1000+Math.random()*8999);
+    update(ref(db,`games/${gCode}/activeEmergency`),{code1:String(c1),code2:String(c2)});
+    countdown = 10;
+  }
+  regen();
+  oxyCodeIv = setInterval(()=>{
+    countdown--;
+    txt('oxy-cd',`Prossimo cambio: ${countdown}s`);
+    if(countdown<=0) regen();
+  },1000);
 }
 
 async function autoWinCheck(){
@@ -659,22 +733,25 @@ function refreshGM(){
   htm('gm-votes',alive.map(p=>{const cnt=gs.votes?.[p.name]||0;return`<div class="vr" onclick="addVote('${p.name}')"><span style="width:22px;text-align:center">${p.color}</span><span style="flex:1">${p.name}</span><div class="vn ${cnt===0?'z':''}" id="v-${p.name.replace(/\W/g,'_')}">${cnt}</div></div>`}).join(''));
   const sk=gs.votes?.['__skip__']||0; const skEl=$('v-skip'); if(skEl){skEl.textContent=sk;skEl.className='vn'+(sk===0?' z':'');}
   // Gestione emergenze attive
-  // Gestione emergenze attive
   const em = gs.activeEmergency;
   sh('em-idle', !em);
   sh('em-oxygen', !!(em && em.type==='oxygen'));
   sh('em-reactor', !!(em && em.type==='reactor'));
   if(em){
-    const elapsed = Math.floor((Date.now() - em.startTs) / 1000);
-    const left = Math.max(0, em.duration - elapsed);
     if(em.type==='oxygen'){
-      txt('em-oxy-td', left+'s');
       txt('oxy-s1', em.done1 ? '✓ OK' : '');
       txt('oxy-s2', em.done2 ? '✓ OK' : '');
+      txt('oxy-code1', em.done1 ? '✓' : (em.code1||'—'));
+      txt('oxy-code2', em.done2 ? '✓' : (em.code2||'—'));
+      const oxyActive = !!(em && em.type==='oxygen');
+      sh('post1-idle', !oxyActive); sh('post1-active', oxyActive);
+      sh('post2-idle', !oxyActive); sh('post2-active', oxyActive);
+      txt('post1-code', em.done1 ? '✓' : (em.code1||'—'));
+      txt('post2-code', em.done2 ? '✓' : (em.code2||'—'));
+      sh('post1-ok', !!em.done1); sh('post2-ok', !!em.done2);
       if(em.done1 && em.done2) gmResolveEmergency();
     }
     if(em.type==='reactor'){
-      txt('em-rea-td', left+'s');
       const both = em.confirm1 && em.confirm2;
       const gap = both ? Math.abs((em.confirmTs1||0)-(em.confirmTs2||0)) : 999999;
       if(both && gap<=5000){
@@ -686,7 +763,6 @@ function refreshGM(){
         txt('rea-status', em.confirm1?'⏳ Postazione 1 OK — attesa postazione 2...': em.confirm2?'⏳ Postazione 2 OK — attesa postazione 1...':'In attesa delle due conferme...');
       }
     }
-    if(left<=0 && !gs.victory) autoFailEmergency();
   }
 }
 
@@ -726,12 +802,11 @@ window.gmEject = async () => {
 function updEmT(s){ const e=$('em-td'); e.textContent=s; e.className='bt '+(s>20?'tg':s>10?'ty':'tr'); }
 window.gmOxyCheck = async post => {
   const em = gS.activeEmergency; if(!em || em.type!=='oxygen') return;
-  const input = gv(`oxy-in${post}`).trim();
+  const input = (gv(`oxy-in${post}`) || gv(`post${post}-in`)).trim();
   const correct = post===1 ? em.code1 : em.code2;
   if(input !== correct){ alert('❌ Codice errato!'); return; }
   await update(ref(db,`games/${gCode}/activeEmergency`),{ [`done${post}`]:true });
 };
-
 window.gmReaConfirm = async post => {
   const em = gS.activeEmergency; if(!em || em.type!=='reactor') return;
   await update(ref(db,`games/${gCode}/activeEmergency`),{ [`confirm${post}`]:true, [`confirmTs${post}`]:Date.now() });
@@ -740,6 +815,8 @@ window.gmReaConfirm = async post => {
 window.gmFailEmergency = async () => {
   if(!confirm('Dichiari fallita l\'emergenza? Gli impostori vincono.')) return;
   clearInterval(emIv);
+  clearInterval(oxyCodeIv);
+  emergencyFailed = true;
   await update(gRef,{ activeEmergency:null, phase:'exploration' });
   await setVictory('impostors','Emergenza non risolta in tempo!');
 };
@@ -754,6 +831,7 @@ async function autoFailEmergency(){
 
 async function gmResolveEmergency(){
   clearInterval(emIv);
+  clearInterval(oxyCodeIv);
   await update(gRef,{ activeEmergency:null, phase:'exploration' });
   await bcast({ type:'resolved', icon:'✅', title:'EMERGENZA RISOLTA', body:'Sistemi ripristinati. Riprende la fase di esplorazione.', color:'green' });
   gmLog('✓ Emergenza risolta','green');
@@ -978,9 +1056,9 @@ window.plSab = async type => {
   await update(gRef, { lastSabotage: Date.now() });
   startSabCD(cooldown);
   if(type === 'oxygen') {
-    const c1=Math.floor(1000+Math.random()*8999), c2=Math.floor(1000+Math.random()*8999);
     emergencyFailed = false;
-    await update(gRef, { phase:'emergency', activeEmergency:{ type:'oxygen', startTs:Date.now(), duration:45, code1:String(c1), code2:String(c2), done1:false, done2:false }});
+    await update(gRef, { phase:'emergency', activeEmergency:{ type:'oxygen', startTs:Date.now(), duration:45, code1:'0000', code2:'0000', done1:false, done2:false }});
+    startOxyCodes();
     await bcast({ type:'emergency_red', icon:'🫁', title:'OSSIGENO IN ESAURIMENTO', body:`Inserire i codici nelle due postazioni entro 45 secondi!\n\nPostazione 1: ${c1}\nPostazione 2: ${c2}`, color:'red' });
   } else if(type === 'reactor') {
     emergencyFailed = false;
