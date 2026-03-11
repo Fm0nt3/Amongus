@@ -600,10 +600,21 @@ function fbErr(m){ const e=$('fb-err'); e.textContent=m; e.style.display='block'
     const c=JSON.parse(s); sv('fb-key',c.key); sv('fb-url',c.url); sv('fb-pid',c.pid); sv('fb-aid',c.aid);
     const app=initializeApp({apiKey:c.key,databaseURL:c.url,projectId:c.pid,appId:c.aid,authDomain:`${c.pid}.firebaseapp.com`});
     db=getDatabase(app);
-    showScreen('s-lg');
-  } catch(_){}
+    // Ripristina sessione GM se presente
+    const gm=localStorage.getItem('gmSession');
+    if(gm){
+      const g=JSON.parse(gm);
+      isGM=true; myName='__GM__';
+      gCode=g.code; gRef=ref(db,`games/${g.code}`);
+      sv('cfg-code',g.code);
+      txt('gm-code','codice: '+g.code);
+      showScreen('s-gm');
+      listenGM(); gmTab(0);
+    } else {
+      showScreen('s-lg');
+    }
+  } catch(_){ showScreen('s-lg'); }
 })();
-
 // ── LOGIN ──────────────────────────────────────────────────────────
 window.loadPlayers = async () => {
   const code=gv('lg-code').toUpperCase(); if(code.length<4) return;
@@ -629,8 +640,9 @@ window.loginGM = () => {
   isGM=true; myName='__GM__';
   showScreen('s-gm');
   txt('gm-code','codice: '+gv('cfg-code'));
+  localStorage.setItem('gmSession', JSON.stringify({isGM:true, code:gv('cfg-code').toUpperCase()}));
 };
-
+  
 function lgErr(m){ const e=$('lg-err'); e.textContent=m; e.style.display='block'; }
 
 // ── GM SETUP ───────────────────────────────────────────────────────
@@ -674,6 +686,7 @@ window.gmStart = async () => {
     sabRequest:null,commsBlocked:false,victory:null});
 
   txt('gm-code','codice: '+code);
+  localStorage.setItem('gmSession', JSON.stringify({isGM:true, code}));
   gmLog('Partita iniziata — '+code,'green');
   gmLog('Impostori: '+[...imps].join(', '),'red');
   listenGM(); gmTab(0);
@@ -1109,6 +1122,7 @@ function showVictory(winner,reason){
 window.closeVictory = async () => {
   $('vov').classList.remove('on');
   if(isGM&&gRef) await update(gRef,{victory:null});
+  localStorage.removeItem('gmSession');
   showScreen('s-lg');
 };
 
