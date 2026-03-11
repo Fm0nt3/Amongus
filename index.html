@@ -286,19 +286,36 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
 
   <!-- T3 EMERGENZE -->
   <div class="tp" id="t3">
-    <div class="card">
-      <h2>🚨 CODICE ROSSO — EMERGENZA GRAVE</h2>
-      <div class="msg msg-blue" style="margin-bottom:12px;font-size:.78rem">Tutti i giocatori ricevono una notifica immediata con conto alla rovescia.</div>
-      <div class="field"><label>TIPO</label><select id="em-type"><option>💨 Impianto Ossigeno</option><option>⚛ Reattore Nucleare</option><option>⚡ Rete Energetica</option></select></div>
-      <div class="field"><label>STANZA DOVE RISOLVERE</label><input id="em-room" placeholder="es. Sala Server"></div>
-      <div class="field"><label>COSA FARE</label><input id="em-act" placeholder="es. Fare 3 canestri"></div>
-      <div class="field"><label>SECONDI PER RISOLVERE</label><input type="number" id="em-sec" value="60" min="15" max="300"></div>
-      <button class="btn btn-red btn-big" onclick="gmLaunchRed()">🚨 LANCIA CODICE ROSSO</button>
+    <!-- Nessuna emergenza attiva -->
+    <div id="em-idle">
+      <div class="msg msg-blue" style="font-size:.78rem;margin-bottom:12px">Nessuna emergenza attiva. Gli impostori possono avviarne una dai loro telefoni.</div>
     </div>
-    <div class="card" id="em-card" style="display:none">
-      <h2>⏱ TIMER EMERGENZA</h2>
-      <div class="bt tg" id="em-td">60</div>
-      <div class="row"><button class="btn btn-green" onclick="gmResolveRed()">✓ RISOLTA</button><button class="btn btn-red" onclick="gmFailRed()">✗ FALLITA</button></div>
+
+    <!-- Emergenza OSSIGENO attiva -->
+    <div class="card" id="em-oxygen" style="display:none">
+      <h2>🫁 OSSIGENO IN ESAURIMENTO</h2>
+      <div class="bt tr" id="em-oxy-td">45</div>
+      <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">I crewmate devono inserire i codici corretti in entrambe le postazioni.</div>
+      <div class="field"><label>CODICE POSTAZIONE 1 <span id="oxy-s1" style="color:#00ff88"></span></label>
+        <div style="display:flex;gap:8px"><input id="oxy-in1" placeholder="es. 1234" style="flex:1"><button class="btn btn-green btn-sm" onclick="gmOxyCheck(1)">✓</button></div>
+      </div>
+      <div class="field"><label>CODICE POSTAZIONE 2 <span id="oxy-s2" style="color:#00ff88"></span></label>
+        <div style="display:flex;gap:8px"><input id="oxy-in2" placeholder="es. 5678" style="flex:1"><button class="btn btn-green btn-sm" onclick="gmOxyCheck(2)">✓</button></div>
+      </div>
+      <button class="btn btn-red mt8" onclick="gmFailEmergency()">✗ DICHIARA FALLITA</button>
+    </div>
+
+    <!-- Emergenza REATTORE attiva -->
+    <div class="card" id="em-reactor" style="display:none">
+      <h2>⚛️ REATTORE IN SOVRACCARICO</h2>
+      <div class="bt tr" id="em-rea-td">45</div>
+      <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">Due postazioni devono confermare simultaneamente entro 5 secondi l'una dall'altra.</div>
+      <div class="row" style="margin-bottom:12px">
+        <button class="btn btn-green" id="rea-btn1" onclick="gmReaConfirm(1)">✋ POSTAZIONE 1</button>
+        <button class="btn btn-green" id="rea-btn2" onclick="gmReaConfirm(2)">✋ POSTAZIONE 2</button>
+      </div>
+      <div class="msg msg-yellow" id="rea-status" style="font-size:.78rem">In attesa delle due conferme...</div>
+      <button class="btn btn-red mt8" onclick="gmFailEmergency()">✗ DICHIARA FALLITA</button>
     </div>
     <div class="card">
       <h2>📡 CODICE GIALLO — COMUNICAZIONI</h2>
@@ -399,9 +416,13 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         </div>
         <div class="card">
           <h2>SABOTAGGI</h2>
-          <button class="sb sb-r" onclick="plSab('red')">
-            <span class="si">🚨</span>
-            <div><div class="stit">CODICE ROSSO</div><div class="sds">Emergenza critica — tutti devono correre a risolvere</div></div>
+          <button class="sb sb-r" onclick="plSab('oxygen')">
+            <span class="si">🫁</span>
+            <div><div class="stit">OSSIGENO</div><div class="sds">Inserire i codici in due stanze entro il timer</div></div>
+          </button>
+          <button class="sb sb-r" onclick="plSab('reactor')">
+            <span class="si">⚛️</span>
+            <div><div class="stit">REATTORE</div><div class="sds">Confermare da due postazioni diverse entro il timer</div></div>
           </button>
           <button class="sb sb-y" onclick="plSab('yellow')">
             <span class="si">📡</span>
@@ -637,6 +658,34 @@ function refreshGM(){
   // votes
   htm('gm-votes',alive.map(p=>{const cnt=gs.votes?.[p.name]||0;return`<div class="vr" onclick="addVote('${p.name}')"><span style="width:22px;text-align:center">${p.color}</span><span style="flex:1">${p.name}</span><div class="vn ${cnt===0?'z':''}" id="v-${p.name.replace(/\W/g,'_')}">${cnt}</div></div>`}).join(''));
   const sk=gs.votes?.['__skip__']||0; const skEl=$('v-skip'); if(skEl){skEl.textContent=sk;skEl.className='vn'+(sk===0?' z':'');}
+  // Gestione emergenze attive
+  const em = gs.activeEmergency;
+  sh('em-idle', !em);
+  sh('em-oxygen', !!(em && em.type==='oxygen'));
+  sh('em-reactor', !!(em && em.type==='reactor'));
+  if(em){
+    const elapsed = Math.floor((Date.now() - em.startTs) / 1000);
+    const left = Math.max(0, em.duration - elapsed);
+    if(em.type==='oxygen'){
+      txt('em-oxy-td', left+'s');
+      txt('oxy-s1', em.done1 ? '✓ OK' : '');
+      txt('oxy-s2', em.done2 ? '✓ OK' : '');
+      if(em.done1 && em.done2) gmResolveEmergency();
+    }
+    if(em.type==='reactor'){
+      txt('em-rea-td', left+'s');
+      const both = em.confirm1 && em.confirm2;
+      const gap = both ? Math.abs((em.confirmTs1||0)-(em.confirmTs2||0)) : 999999;
+      if(both && gap<=5000) gmResolveEmergency();
+      else if(both && gap>5000){
+        txt('rea-status','⚠ Conferme troppo distanti — ripetere!');
+        await update(ref(db,`games/${gCode}/activeEmergency`),{confirm1:false,confirm2:false});
+      } else {
+        txt('rea-status', em.confirm1?'⏳ Postazione 1 OK — attesa postazione 2...': em.confirm2?'⏳ Postazione 2 OK — attesa postazione 1...':'In attesa delle due conferme...');
+      }
+    }
+    if(left<=0 && !gs.victory) gmFailEmergency();
+  }
 }
 
 // ── GM ACTIONS ─────────────────────────────────────────────────────
@@ -672,28 +721,33 @@ window.gmEject = async () => {
 };
 
 // emergencies
-window.gmLaunchRed = async () => {
-  const type=gv('em-type'),room=gv('em-room')||'???',act=gv('em-act')||'???',secs=parseInt(gv('em-sec'))||60;
-  await update(gRef,{phase:'emergency'});
-  await bcast({type:'emergency_red',icon:'🚨',title:`CODICE ROSSO — ${type}`,body:`EMERGENZA CRITICA!\n\nRecati in: ${room}\nCosa fare: ${act}`,color:'red',timer:secs});
-  gmLog(`🚨 Codice Rosso: ${type} → ${room}`,'red');
-  sh('em-card',true);
-  let s=secs; updEmT(s); clearInterval(emIv);
-  emIv=setInterval(()=>{ s--; updEmT(s); if(s<=0){clearInterval(emIv);gmFailRed();}},1000);
-};
 function updEmT(s){ const e=$('em-td'); e.textContent=s; e.className='bt '+(s>20?'tg':s>10?'ty':'tr'); }
-window.gmResolveRed = async () => {
-  clearInterval(emIv); sh('em-card',false);
-  await update(gRef,{phase:'exploration'});
-  await bcast({type:'resolved',icon:'✓',title:'EMERGENZA RISOLTA',body:'Sistemi ripristinati. Riprende la fase di esplorazione.',color:'green'});
-  gmLog('✓ Emergenza risolta','green');
+window.gmOxyCheck = async post => {
+  const em = gS.activeEmergency; if(!em || em.type!=='oxygen') return;
+  const input = gv(`oxy-in${post}`).trim();
+  const correct = post===1 ? em.code1 : em.code2;
+  if(input !== correct){ alert('❌ Codice errato!'); return; }
+  await update(ref(db,`games/${gCode}/activeEmergency`),{ [`done${post}`]:true });
 };
-window.gmFailRed = async () => {
-  clearInterval(emIv); sh('em-card',false);
-  gmLog('✗ Emergenza fallita','red');
+
+window.gmReaConfirm = async post => {
+  const em = gS.activeEmergency; if(!em || em.type!=='reactor') return;
+  await update(ref(db,`games/${gCode}/activeEmergency`),{ [`confirm${post}`]:true, [`confirmTs${post}`]:Date.now() });
+};
+
+window.gmFailEmergency = async () => {
+  if(!confirm('Dichiari fallita l\'emergenza? Gli impostori vincono.')) return;
+  clearInterval(emIv);
+  await update(gRef,{ activeEmergency:null, phase:'exploration' });
   await setVictory('impostors','Emergenza non risolta in tempo!');
 };
-window.gmLaunchYellow = async () => {
+
+async function gmResolveEmergency(){
+  clearInterval(emIv);
+  await update(gRef,{ activeEmergency:null, phase:'exploration' });
+  await bcast({ type:'resolved', icon:'✅', title:'EMERGENZA RISOLTA', body:'Sistemi ripristinati. Riprende la fase di esplorazione.', color:'green' });
+  gmLog('✓ Emergenza risolta','green');
+}window.gmLaunchYellow = async () => {
   const room=gv('yel-room')||'???',act=gv('yel-act')||'???';
   await update(gRef,{commsBlocked:true});
   await bcast({type:'emergency_yellow',icon:'📡',title:'CODICE GIALLO',body:`Comunicazioni sospese!\n\nRecati in: ${room}\nCosa fare: ${act}`,color:'yellow'});
@@ -906,20 +960,25 @@ function startSabCD(secs){
   
 window.plSab = async type => {
   if(type === 'yellow' && gS.commsBlocked){ alert('Comunicazioni già sospese!'); return; }
+  if((type === 'oxygen' || type === 'reactor') && gS.activeEmergency){ alert('Emergenza già in corso!'); return; }
   const lastSab = gS.lastSabotage || 0;
-  const cooldown = 120; // secondi
+  const cooldown = 120;
   const elapsed = Math.floor((Date.now() - lastSab) / 1000);
   if(elapsed < cooldown){ alert(`⏱ Devi aspettare ancora ${cooldown - elapsed} secondi prima del prossimo sabotaggio!`); return; }
   await update(gRef, { lastSabotage: Date.now() });
   startSabCD(cooldown);
-  if(type === 'red') {
-    await update(gRef, { phase: 'emergency' });
-    await bcast({ type:'emergency_red', icon:'🚨', title:'CODICE ROSSO', body:'EMERGENZA CRITICA!\n\nRecati al Quartier Generale per ricevere istruzioni!', color:'red' });
+  if(type === 'oxygen') {
+    const c1=Math.floor(1000+Math.random()*8999), c2=Math.floor(1000+Math.random()*8999);
+    await update(gRef, { phase:'emergency', activeEmergency:{ type:'oxygen', startTs:Date.now(), duration:45, code1:String(c1), code2:String(c2), done1:false, done2:false }});
+    await bcast({ type:'emergency_red', icon:'🫁', title:'OSSIGENO IN ESAURIMENTO', body:`Inserire i codici nelle due postazioni entro 45 secondi!\n\nPostazione 1: ${c1}\nPostazione 2: ${c2}`, color:'red' });
+  } else if(type === 'reactor') {
+    await update(gRef, { phase:'emergency', activeEmergency:{ type:'reactor', startTs:Date.now(), duration:45, confirm1:false, confirm2:false }});
+    await bcast({ type:'emergency_red', icon:'⚛️', title:'REATTORE IN SOVRACCARICO', body:'Due postazioni devono confermare simultaneamente!\n\nRecati al Quartier Generale SUBITO!', color:'red' });
   } else {
     await update(gRef, { commsBlocked: true });
     await bcast({ type:'emergency_yellow', icon:'📡', title:'CODICE GIALLO', body:'Comunicazioni sospese!\n\nRiunioni libere bloccate fino alla risoluzione.', color:'yellow' });
   }
-};  
+};
 // alerts
 function procAlerts(){
   const alerts=gS.alerts; if(!alerts) return;
