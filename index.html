@@ -659,6 +659,7 @@ function refreshGM(){
   htm('gm-votes',alive.map(p=>{const cnt=gs.votes?.[p.name]||0;return`<div class="vr" onclick="addVote('${p.name}')"><span style="width:22px;text-align:center">${p.color}</span><span style="flex:1">${p.name}</span><div class="vn ${cnt===0?'z':''}" id="v-${p.name.replace(/\W/g,'_')}">${cnt}</div></div>`}).join(''));
   const sk=gs.votes?.['__skip__']||0; const skEl=$('v-skip'); if(skEl){skEl.textContent=sk;skEl.className='vn'+(sk===0?' z':'');}
   // Gestione emergenze attive
+  // Gestione emergenze attive
   const em = gs.activeEmergency;
   sh('em-idle', !em);
   sh('em-oxygen', !!(em && em.type==='oxygen'));
@@ -676,15 +677,16 @@ function refreshGM(){
       txt('em-rea-td', left+'s');
       const both = em.confirm1 && em.confirm2;
       const gap = both ? Math.abs((em.confirmTs1||0)-(em.confirmTs2||0)) : 999999;
-      if(both && gap<=5000) gmResolveEmergency();
-      else if(both && gap>5000){
+      if(both && gap<=5000){
+        gmResolveEmergency();
+      } else if(both && gap>5000){
         txt('rea-status','⚠ Conferme troppo distanti — ripetere!');
-        await update(ref(db,`games/${gCode}/activeEmergency`),{confirm1:false,confirm2:false});
+        update(ref(db,`games/${gCode}/activeEmergency`),{confirm1:false,confirm2:false});
       } else {
         txt('rea-status', em.confirm1?'⏳ Postazione 1 OK — attesa postazione 2...': em.confirm2?'⏳ Postazione 2 OK — attesa postazione 1...':'In attesa delle due conferme...');
       }
     }
-    if(left<=0 && !gs.victory) gmFailEmergency();
+    if(left<=0 && !gs.victory) autoFailEmergency();
   }
 }
 
@@ -741,6 +743,14 @@ window.gmFailEmergency = async () => {
   await update(gRef,{ activeEmergency:null, phase:'exploration' });
   await setVictory('impostors','Emergenza non risolta in tempo!');
 };
+
+let emergencyFailed = false;
+async function autoFailEmergency(){
+  if(emergencyFailed) return;
+  emergencyFailed = true;
+  await update(gRef,{ activeEmergency:null, phase:'exploration' });
+  await setVictory('impostors','Emergenza non risolta in tempo!');
+}
 
 async function gmResolveEmergency(){
   clearInterval(emIv);
@@ -969,9 +979,11 @@ window.plSab = async type => {
   startSabCD(cooldown);
   if(type === 'oxygen') {
     const c1=Math.floor(1000+Math.random()*8999), c2=Math.floor(1000+Math.random()*8999);
+    emergencyFailed = false;
     await update(gRef, { phase:'emergency', activeEmergency:{ type:'oxygen', startTs:Date.now(), duration:45, code1:String(c1), code2:String(c2), done1:false, done2:false }});
     await bcast({ type:'emergency_red', icon:'🫁', title:'OSSIGENO IN ESAURIMENTO', body:`Inserire i codici nelle due postazioni entro 45 secondi!\n\nPostazione 1: ${c1}\nPostazione 2: ${c2}`, color:'red' });
   } else if(type === 'reactor') {
+    emergencyFailed = false;
     await update(gRef, { phase:'emergency', activeEmergency:{ type:'reactor', startTs:Date.now(), duration:45, confirm1:false, confirm2:false }});
     await bcast({ type:'emergency_red', icon:'⚛️', title:'REATTORE IN SOVRACCARICO', body:'Due postazioni devono confermare simultaneamente!\n\nRecati al Quartier Generale SUBITO!', color:'red' });
   } else {
