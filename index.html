@@ -464,7 +464,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <div class="card">
           <h2>SABOTAGGI</h2>
           <button class="sb sb-r" onclick="plSab('oxygen')">
-            <span class="si">🫁</span>
+            <span class="si">02</span>
             <div><div class="stit">OSSIGENO</div><div class="sds">Inserire i codici in due stanze entro il timer</div></div>
           </button>
           <button class="sb sb-r" onclick="plSab('reactor')">
@@ -1051,7 +1051,7 @@ function startSabCD(secs){
   
 window.plSab = async type => {
   if(type === 'yellow' && gS.commsBlocked){ alert('Comunicazioni già sospese!'); return; }
-  if((type === 'oxygen' || type === 'reactor') && gS.activeEmergency){ alert('Emergenza già in corso!'); return; }
+  if((type === 'oxygen' || type === 'reactor') && gS.activeEmergency?.type){ alert('Emergenza già in corso!'); return; }
   const lastSab = gS.lastSabotage || 0;
   const cooldown = 120;
   const elapsed = Math.floor((Date.now() - lastSab) / 1000);
