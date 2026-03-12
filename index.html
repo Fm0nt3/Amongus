@@ -1379,20 +1379,7 @@ window.plCallMeeting = async () => {
   if(gS.phase !== 'exploration' && gS.phase !== 'emergency'){ alert('Non puoi chiamare una riunione adesso!'); return; }
   if(gS.commsBlocked){ alert('❌ Comunicazioni sospese!'); return; }
   if(gS.phase === 'emergency' && !gS.activeEmergency){ alert('Non puoi chiamare una riunione adesso!'); return; }
-  const me=gS.players?.[myName];
-  const myFree=me?.freeMeetings||0;
-  const maxFree=gS.meetings?.maxFree??2;
-  const isBody=await new Promise(res=>{
-    const r=confirm('Hai trovato un cadavere? Premi OK per cadavere, Annulla per riunione libera.');
-    res(r);
-  });
-  if(!isBody){
-    if(myFree>=maxFree){ alert(`❌ Hai già usato tutte le tue ${maxFree} riunioni libere!`); return; }
-    if(!confirm(`Confermi di voler usare una riunione libera? Ne hai usate ${myFree} su ${maxFree}.`)) return;
-    await update(ref(db,`games/${gCode}/players/${myName}`),{freeMeetings:myFree+1});
-  } else {
-    if(!confirm('Confermi di aver trovato un cadavere?')) return;
-  }
+  if(!confirm('Confermi di aver trovato un cadavere?')) return;
   const allP=Object.values(gS.players||{});
   const totDone=allP.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
   await update(ref(db,`games/${gCode}/tasks`),{done:totDone});
