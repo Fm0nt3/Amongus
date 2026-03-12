@@ -857,11 +857,7 @@ function refreshGM(){
   txt('g-progt',`${gs.tasks?.done||0} / ${gs.tasks?.total||0} — ${pct}%`);
   sv('g-tin',gs.tasks?.done||0);
   setPhaseBar('gm-pb','gm-pt',gs.phase);
-  if(gs.phase==='meeting' && !meetIv){
-    sh('meet-live',true);
-    let s=gs.config?.disc||180; updMeetT(s); clearInterval(meetIv);
-    meetIv=setInterval(()=>{s--;updMeetT(s);if(s<=0){clearInterval(meetIv);gmEndDisc();}},1000);
-  }
+  if(gs.phase==='meeting') sh('meet-live',true);
   if(gs.phase!=='meeting'){ clearInterval(meetIv); meetIv=null; sh('meet-live',false); }
   htm('gm-pl',all.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span><span class="badge ${p.alive?(p.role==='crewmate'?'b-crew':'b-imp'):'b-ghost'}">${!p.alive?'👻':p.role==='crewmate'?'CREW':'IMP'}</span></div>`).join(''));
   const opts=alive.map(p=>`<option>${p.name}</option>`).join('')||'<option>—</option>';
