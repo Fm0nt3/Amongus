@@ -1112,13 +1112,17 @@ window.gmResolveVote = async () => {
     if(v2>maxV){maxV=v2;maxN=n;tied=false;}else if(v2===maxV&&maxV>0)tied=true;
   }
   if(tied||!maxN||maxN==='__skip__'||maxV===0){
-    await bcast({type:'vote_result',icon:'⚖',title:'NESSUNA ESPULSIONE',body:'Pareggio o astensione. La partita riprende.',color:'blue'});
-    await restorePendingEmergency() || await update(gRef,{phase:'exploration'});
+    const pending2=gS.pendingEmergency;
+    const emWarning2=pending2?(pending2.type==='oxygen'?'\n\n🫁 L\'emergenza ossigeno riprende subito!':'\n\n⚛️ Il reattore riprende subito!'):'';
+    await bcast({type:'vote_result',icon:'⚖',title:'NESSUNA ESPULSIONE',body:`Pareggio o astensione. La partita riprende.${emWarning2}`,color:'blue'});
+    await restorePendingEmergency() || await update(gRef,{phase:'exploration'}); 
     gmLog('Voto: nessuna espulsione','yellow');
   } else {
     const p=gS.players[maxN],isI=p?.role==='impostor';
     await update(ref(db,`games/${gCode}/players/${maxN}`),{alive:false});
-    await bcast({type:'eject',icon:'⚖',title:`${maxN} ESPULSO (${maxV} voti)`,body:`Era un ${isI?'🔴 IMPOSTORE':'🔵 CREWMATE'}!`,color:isI?'red':'blue'});
+    const pending=gS.pendingEmergency;
+    const emWarning=pending?(pending.type==='oxygen'?'\n\n🫁 L\'emergenza ossigeno riprende subito!':'\n\n⚛️ Il reattore riprende subito!'):'';
+    await bcast({type:'eject',icon:'⚖',title:`${maxN} ESPULSO (${maxV} voti)`,body:`Era un ${isI?'🔴 IMPOSTORE':'🔵 CREWMATE'}!${emWarning}`,color:isI?'red':'blue'});
     await restorePendingEmergency() || await update(gRef,{phase:'exploration'});
     gmLog(`⚖ ${maxN} espulso — era ${p?.role}`,isI?'red':'blue'); await gmCheckWin();
   }
