@@ -636,7 +636,7 @@ let db, gRef, gCode, myName, isGM;
 let gS = {};          // game state snapshot
 let gmPL = [];        // setup players list
 let lTasks = {};      // local task checkboxes
-let killCdIv, emIv, meetIv, alertIv;
+let killCdIv, emIv, meetIv, alertIv, plDiscIv;
 
 const TASKS = [
   "Metti in ordine gli oggetti sul tavolo per colore",
@@ -1066,7 +1066,7 @@ window.gmMeeting = async () => {
   const allPlayers=Object.values(gs.players||{});
   const totalDone=allPlayers.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
   await update(ref(db,`games/${gCode}/tasks`),{done:totalDone});
-  await update(gRef, { phase:'meeting', meetingPhase:'waiting', votes:{}, votersDone:{}, meetingArrivals:{}, taskSnapshot:totalDone });  
+  await update(gRef, { phase:'meeting', meetingPhase:'waiting', votes:{}, votersDone:{}, voteDetails:{}, meetingArrivals:{}, taskSnapshot:totalDone });  
   await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:reason==='body'?`Cadavere trovato: ${body}\n\nTutti al QG IMMEDIATAMENTE!`:'Riunione di emergenza!\n\nTutti al QG IMMEDIATAMENTE!',color:'blue'});
   gmLog(`📢 Riunione — ${reason==='body'?'cadavere: '+body:'libera'}`,'blue');
   sh('meet-live',true);
@@ -1226,15 +1226,26 @@ function refreshPL(){
     const total=Object.values(gs.players||{}).filter(p=>p.alive).length;
     txt('pm-arrive-count',`${arrivals} / ${total} arrivati`);
     const myArrival=gs.meetingArrivals?.[myName];
-    if(myArrival){ const b=$('pm-arrive-btn'); if(b){b.disabled=true;b.textContent='✓ Arrivato';} }
+    const b=$('pm-arrive-btn');
+    if(b){
+      b.disabled=!!myArrival;
+      b.textContent=myArrival?'✓ Arrivato':'✋ SONO ARRIVATO';
+    }
   }
 
   if(inMeeting && mp==='discussion'){
-    const elapsed=Math.floor((Date.now()-(gs.discussionStart||Date.now()))/1000);
+    clearInterval(plDiscIv);
+    const discStart=gs.discussionStart||Date.now();
     const disc=gs.config?.disc||180;
-    const left=Math.max(0,disc-elapsed);
-    const m=Math.floor(left/60),s=left%60;
-    txt('pm-disc-td',`${m}:${s.toString().padStart(2,'0')}`);
+    plDiscIv=setInterval(()=>{
+      const elapsed=Math.floor((Date.now()-discStart)/1000);
+      const left=Math.max(0,disc-elapsed);
+      const m=Math.floor(left/60),s=left%60;
+      const e=$('pm-disc-td'); if(e) e.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+      if(left<=0) clearInterval(plDiscIv);
+    },1000);
+  } else {
+    clearInterval(plDiscIv);
   }
 
   if(inMeeting && mp==='voting'){
@@ -1253,12 +1264,26 @@ function refreshPL(){
     const votes=gs.votes||{};
     const maxV=Math.max(1,...Object.values(votes).filter(v=>typeof v==='number'));
     const sorted=[...alive].sort((a,b)=>(votes[b.name]||0)-(votes[a.name]||0));
-    htm('pm-results-list', sorted.map(p=>{
-      const v=votes[p.name]||0;
-      const pct=Math.round(v/maxV*100);
-      const col=v===maxV&&v>0?'#ff3535':'#00d4ff';
-      return `<div class="vres"><span class="pe">${p.color}</span><span class="vres-name">${p.name}</span><div class="vres-bar"><div class="vres-fill" style="width:${pct}%;background:${col}"></div></div><span class="vres-count" style="color:${col}">${v}</span></div>`;
-    }).join('')+(votes['__skip__']?`<div class="vres"><span class="pe">🙅</span><span class="vres-name">Saltato</span><div class="vres-bar"><div class="vres-fill" style="width:${Math.round((votes['__skip__']||0)/maxV*100)}%;background:#ffc300"></div></div><span class="vres-count" style="color:#ffc300">${votes['__skip__']||0}</span></div>`:''));
+    const colorMap={};
+    Object.values(gs.players||{}).forEach(p=>colorMap[p.name]=p.color);
+    const voteDetails=gs.voteDetails||{};
+    htm('pm-results-list', `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        ${sorted.map(p=>{
+          const v=votes[p.name]||0;
+          const isMax=v===maxV&&v>0;
+          const whoVoted=Object.entries(voteDetails).filter(([voter,tgt])=>tgt===p.name).map(([voter])=>colorMap[voter]||'❓');
+          return `<div style="background:#0e1c2e;border:1px solid ${isMax?'#ff3535':'#1a3050'};border-radius:6px;padding:10px 12px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+              <span style="font-size:1.2rem">${p.color}</span>
+              <span style="font-family:'Orbitron',monospace;font-size:.65rem;${isMax?'color:#ff3535':'color:#b8cce0'}">${p.name}</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:2px;min-height:20px">${whoVoted.length?whoVoted.map(c=>`<span style="font-size:1rem">${c}</span>`).join(''):'<span class="dim" style="font-size:.7rem">nessun voto</span>'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${votes['__skip__']?`<div style="margin-top:8px;padding:8px 12px;border:1px solid rgba(255,195,0,.3);border-radius:6px;display:flex;align-items:center;gap:8px"><span>🙅</span><span class="dim" style="flex:1">Saltato</span><div style="display:flex;gap:2px">${Object.entries(voteDetails).filter(([,t])=>t==='__skip__').map(([voter])=>`<span style="font-size:1rem">${colorMap[voter]||'❓'}</span>`).join('')}</div></div>`:''}
+    `);
   }
 }
   
@@ -1300,9 +1325,10 @@ window.plArrive = async () => {
 
 window.plVote = async target => {
   const me=gS?.players?.[myName]; if(!me?.alive) return;
-  if(gS.myVote) return;
+  if(gS.votersDone?.[myName]) return;
   await update(ref(db,`games/${gCode}/votes`),{[target]:(gS.votes?.[target]||0)+1});
-  await update(ref(db,`games/${gCode}/votersDone`),{[myName]:true});
+  await update(ref(db,`games/${gCode}/voteDetails`),{[myName]:target});
+  await update(ref(db,`games/${gCode}/votersDone`),{[myName]:true});  
   // Disabilita tutti i bottoni voto
   document.querySelectorAll('.vote-btn').forEach(b=>{b.disabled=true;b.classList.remove('voted');});
   const sel=target==='__skip__'?$('pm-skip-btn'):document.querySelector(`.vote-btn[data-name="${target}"]`);
@@ -1324,7 +1350,7 @@ window.plCallMeeting = async () => {
     ...gS.activeEmergency,
     startTs: null  // verrà reimpostato dopo la riunione
   } : null;
-  await update(gRef, { phase:'meeting', meetingPhase:'waiting', votes:{}, votersDone:{}, meetingArrivals:{}, taskSnapshot:totDone, pendingEmergency:pendingEm, activeEmergency:null });
+  await update(gRef, { phase:'meeting', meetingPhase:'waiting', votes:{}, votersDone:{}, voteDetails:{}, meetingArrivals:{}, taskSnapshot:totDone, pendingEmergency:pendingEm, activeEmergency:null });
   await bcast({ type:'meeting', icon:'📢', title:'RIUNIONE!', body:'È stato trovato un cadavere!\n\nTutti al Quartier Generale IMMEDIATAMENTE!', color:'blue' });
 };
   
