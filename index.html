@@ -660,6 +660,15 @@ window.loginPL = async () => {
   if(!snap.exists()){ lgErr('Codice non trovato.'); return; }
   if(!snap.val().players?.[name]){ lgErr('Nome non in questa partita.'); return; }
   gCode=code; myName=name; isGM=false;
+  const savedTasks = localStorage.getItem(`tasks_${code}_${name}`);
+  if(savedTasks) lTasks = JSON.parse(savedTasks);
+  const killTs = localStorage.getItem(`killTs_${code}_${name}`);
+  if(killTs){
+    const elapsed = Math.floor((Date.now() - parseInt(killTs)) / 1000);
+    const secs = 60; // valore default, verrà sovrascritto quando arriva gS
+    const left = secs - elapsed;
+    if(left > 0) startCD(left);
+  }
   gRef=ref(db,`games/${code}`);
   showScreen('s-pl');
   txt('pl-name', name);
@@ -1063,6 +1072,15 @@ function refreshPL(){
     const rc=$('pl-rc'); rc.className='role-card rc-imp';
     rc.innerHTML='<span class="ri">🔴</span><div class="rt c-imp">IMPOSTORE</div><div class="rd">Elimina i crewmate senza farti scoprire.<br>Simula di svolgere le task!</div>';
     sh('pl-tasks',false); sh('pl-imp',true);
+    if(!killCdIv){
+      const killTs = localStorage.getItem(`killTs_${gCode}_${myName}`);
+      if(killTs){
+        const elapsed = Math.floor((Date.now() - parseInt(killTs)) / 1000);
+        const left = (gs.config?.killCd || 60) - elapsed;
+        if(left > 0) startCD(left);
+        else localStorage.removeItem(`killTs_${gCode}_${myName}`);
+      }
+    }
     const lastSab = gs.lastSabotage || 0;
     const elapsed = Math.floor((Date.now() - lastSab) / 1000);
     const sabCd = 120;
@@ -1095,10 +1113,13 @@ window.plToggle = (i,el) => {
   el.classList.toggle('done',lTasks['t'+i]); el.textContent=lTasks['t'+i]?'✓':'○';
   el.nextElementSibling?.classList.toggle('done',lTasks['t'+i]);
   update(ref(db,`games/${gCode}/players/${myName}`),{tasksDone:Object.values(lTasks).filter(Boolean).length});
+  localStorage.setItem(`tasks_${gCode}_${myName}`, JSON.stringify(lTasks));
 };
 
 window.plKill = async () => {
-  startCD(gS.config?.killCd || 60);
+  const secs = gS.config?.killCd || 60;
+  localStorage.setItem(`killTs_${gCode}_${myName}`, Date.now());
+  startCD(secs);
 };
 
 window.plReportDeath = async () => {
@@ -1128,9 +1149,9 @@ window.plCallMeeting = async () => {
 };
   
 function startCD(secs){
-  const btn=$('pl-kb'),fill=$('pl-cdf'),ctxt=$('pl-cdt');
+  const btn=$('pl-kb'),fill=$('pl-cdf');
   btn.disabled=true; let left=secs; fill.style.width='100%'; clearInterval(killCdIv);
-  killCdIv=setInterval(()=>{left--;fill.style.width=Math.round(left/secs*100)+'%';txt('pl-cdt',`Cooldown: ${left}s`);if(left<=0){clearInterval(killCdIv);btn.disabled=false;fill.style.width='0%';txt('pl-cdt','Pronto!');}},1000);
+  killCdIv=setInterval(()=>{left--;fill.style.width=Math.round(left/secs*100)+'%';txt('pl-cdt',`Cooldown: ${left}s`);if(left<=0){clearInterval(killCdIv);btn.disabled=false;fill.style.width='0%';txt('pl-cdt','Pronto!');localStorage.removeItem(`killTs_${gCode}_${myName}`);}},1000);
 }
 
 let sabCdIv;
