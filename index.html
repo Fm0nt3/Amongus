@@ -259,7 +259,6 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     <div class="card">
       <h2>IMPOSTAZIONI</h2>
       <div class="field"><label>N° IMPOSTORI</label><input type="number" id="cfg-imp" value="2" min="1" max="5"></div>
-      <div class="field"><label>TASK TOTALI PER VINCERE</label><input type="number" id="cfg-tasks" value="20" min="5" max="100"></div>
       <div class="field"><label>DURATA DISCUSSIONE (minuti)</label><input type="number" id="cfg-disc" value="3" min="1" max="10"></div>
       <div class="field"><label>MAX RIUNIONI LIBERE</label><input type="number" id="cfg-fmeet" value="2" min="0" max="5"></div>
       <div class="field"><label>COOLDOWN KILL IMPOSTORI (secondi)</label><input type="number" id="cfg-killcd" value="60" min="10" max="300"></div>
@@ -356,8 +355,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
   <div class="tp" id="t4">
     <div class="card">
       <h2>CONVOCA RIUNIONE</h2>
-      <div class="field"><label>MOTIVO</label><select id="meet-reason"><option value="body">💀 Cadavere trovato</option><option value="free">🚨 Riunione libera</option></select></div>
-      <div class="field"><label>CADAVERE TROVATO</label><select id="meet-body"></select></div>
+      <div class="field"><label>MOTIVO</label><select id="meet-reason"><option value="free">🚨 Riunione libera</option></select></div>
       <button class="btn btn-blue btn-big" onclick="gmMeeting()">📢 CONVOCA RIUNIONE</button>
     </div>
     <div id="meet-live" style="display:none">
@@ -798,7 +796,7 @@ window.gmStart = async () => {
 
   const realTotal = gmPL.filter(p=>!imps.has(p.name)).reduce((_,__)=>_+tEach,0);
   await set(gRef,{code,started:true,phase:'exploration',
-    tasks:{done:0,total:realTotal},meetings:{free:0,maxFree:fmeet,total:0},
+    tasks:{done:0,total:realTotal},meetings:{maxFree:fmeet,total:0},
     config:{impN,disc,killCd,fmeet},players,alerts:{},votes:{},
     sabRequest:null,commsBlocked:false,victory:null});
 
@@ -858,7 +856,9 @@ function refreshGM(){
   const all=Object.values(gs.players),alive=all.filter(p=>p.alive),dead=all.filter(p=>!p.alive);
   const crew=alive.filter(p=>p.role==='crewmate').length, imp=alive.filter(p=>p.role==='impostor').length;
   txt('g-al',alive.length); txt('g-de',dead.length); txt('g-cr',crew); txt('g-im',imp);
-  txt('g-td',gs.tasks?.done||0); txt('g-fr',(gs.meetings?.maxFree||0)-(gs.meetings?.free||0));
+  txt('g-td',gs.tasks?.done||0); 
+  const usedFree=Object.values(gs.players||{}).reduce((s,p)=>s+(p.freeMeetings||0),0);
+  txt('g-fr',(gs.meetings?.maxFree||0)*Object.values(gs.players||{}).filter(p=>p.role==='crewmate').length-usedFree);
   const pct=gs.tasks?.total>0?Math.round(gs.tasks.done/gs.tasks.total*100):0;
   $('g-prog').style.width=pct+'%';
   txt('g-progt',`${gs.tasks?.done||0} / ${gs.tasks?.total||0} — ${pct}%`);
@@ -1061,8 +1061,6 @@ window.gmMeeting = async () => {
   const reason=gv('meet-reason'), gs=gS;
   if(reason==='free'){
     if(gs.commsBlocked){alert('❌ Comunicazioni sospese!');return;}
-    if((gs.meetings?.free||0)>=(gs.meetings?.maxFree||2)){alert('❌ Limite riunioni libere!');return;}
-    await update(ref(db,`games/${gCode}/meetings`),{free:(gs.meetings?.free||0)+1});
   }
   const body=gv('meet-body');
   // Calcola task completate sommando tasksDone di tutti i crewmate
@@ -1380,8 +1378,21 @@ window.plCallMeeting = async () => {
   if(!gS?.started){ alert('Partita non iniziata!'); return; }
   if(gS.phase !== 'exploration' && gS.phase !== 'emergency'){ alert('Non puoi chiamare una riunione adesso!'); return; }
   if(gS.commsBlocked){ alert('❌ Comunicazioni sospese!'); return; }
-  if(gS.phase === 'emergency' && !gS.activeEmergency){ alert('Non puoi chiamare una riunione adesso!'); return; }  
-  if(!confirm('Confermi di aver trovato un cadavere? Verrà convocata una riunione.')) return;
+  if(gS.phase === 'emergency' && !gS.activeEmergency){ alert('Non puoi chiamare una riunione adesso!'); return; }
+  const me=gS.players?.[myName];
+  const myFree=me?.freeMeetings||0;
+  const maxFree=gS.meetings?.maxFree??2;
+  const isBody=await new Promise(res=>{
+    const r=confirm('Hai trovato un cadavere? Premi OK per cadavere, Annulla per riunione libera.');
+    res(r);
+  });
+  if(!isBody){
+    if(myFree>=maxFree){ alert(`❌ Hai già usato tutte le tue ${maxFree} riunioni libere!`); return; }
+    if(!confirm(`Confermi di voler usare una riunione libera? Ne hai usate ${myFree} su ${maxFree}.`)) return;
+    await update(ref(db,`games/${gCode}/players/${myName}`),{freeMeetings:myFree+1});
+  } else {
+    if(!confirm('Confermi di aver trovato un cadavere?')) return;
+  }
   const allP=Object.values(gS.players||{});
   const totDone=allP.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
   await update(ref(db,`games/${gCode}/tasks`),{done:totDone});
