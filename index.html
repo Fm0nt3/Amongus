@@ -567,7 +567,14 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           <h2>🗳 VOTA</h2>
           <div class="msg msg-yellow" style="font-size:.78rem;margin-bottom:12px">Il voto è segreto. Scegli chi espellere oppure salta.</div>
           <div id="pm-vote-list"></div>
-          <button class="btn btn-yellow mt8" id="pm-skip-btn" onclick="plVote('__skip__')">🙅 SALTA</button>
+          <button class="btn btn-yellow mt8" id="pm-skip-btn" onclick="plSelectVote('__skip__',this)">🙅 SALTA</button>
+          <div id="pm-confirm-box" style="display:none;margin-top:12px;padding:12px;border:1px solid #ffc300;border-radius:6px;background:rgba(255,195,0,.05);text-align:center">
+            <div class="dim" style="margin-bottom:8px" id="pm-confirm-label">Confermi il voto?</div>
+            <div class="row">
+              <button class="btn btn-green" onclick="plConfirmVote()">✓ CONFERMA</button>
+              <button class="btn btn-red" onclick="plCancelVote()">✗ ANNULLA</button>
+            </div>
+          </div>
           <div class="dim ctr mt8" id="pm-vote-status"></div>
         </div>
       </div>
@@ -1086,7 +1093,7 @@ window.gmStartVoting = async () => {
   sh('meet-ctrl-disc',false); sh('meet-ctrl-vote',true);
   txt('meet-phase-label','Votazione in corso');
   // Timer automatico 4 minuti
-  let s=240; updMeetT(s);
+  let s=120; updMeetT(s);
   meetIv=setInterval(()=>{s--;updMeetT(s);if(s<=0){clearInterval(meetIv);gmShowResults();}},1000);
 };
 
@@ -1255,7 +1262,7 @@ function refreshPL(){
     const doneVoters=Object.keys(gs.votersDone||{}).length;
     txt('pm-vote-status', myVoted ? `✓ Voto registrato — ${doneVoters}/${totalVoters} hanno votato` : 'Scegli chi espellere');
     if(!myVoted){
-      htm('pm-vote-list', alive.map(p=>p.name===myName?'':`<button class="vote-btn" data-name="${p.name}" onclick="plVote('${p.name}')">${p.color} ${p.name}</button>`).join(''));
+      htm('pm-vote-list', alive.map(p=>p.name===myName?'':`<button class="vote-btn" data-name="${p.name}" onclick="plSelectVote('${p.name}',this)">${p.color} ${p.name}</button>`).join(''));
     }
   }
 
@@ -1323,6 +1330,39 @@ window.plArrive = async () => {
   await update(ref(db,`games/${gCode}/meetingArrivals/${myName}`),{arrived:true});
 };
 
+let pendingVote = null;
+window.plSelectVote = (target, el) => {
+  // Deseleziona tutto
+  document.querySelectorAll('.vote-btn').forEach(b=>b.style.borderColor='');
+  const skip=$('pm-skip-btn'); if(skip) skip.style.borderColor='';
+  // Evidenzia selezionato
+  if(el) el.style.borderColor='#ffc300';
+  pendingVote = target;
+  const label=$('pm-confirm-label');
+  if(label){
+    if(target==='__skip__') label.textContent='Confermi di voler saltare?';
+    else {
+      const p=Object.values(gS.players||{}).find(p=>p.name===target);
+      label.textContent=`Confermi di votare ${p?.color||''} ${target}?`;
+    }
+  }
+  sh('pm-confirm-box', true);
+};
+
+window.plConfirmVote = () => {
+  if(!pendingVote) return;
+  plVote(pendingVote);
+  pendingVote=null;
+  sh('pm-confirm-box', false);
+};
+
+window.plCancelVote = () => {
+  pendingVote=null;
+  sh('pm-confirm-box', false);
+  document.querySelectorAll('.vote-btn').forEach(b=>b.style.borderColor='');
+  const skip=$('pm-skip-btn'); if(skip) skip.style.borderColor='';
+};
+  
 window.plVote = async target => {
   const me=gS?.players?.[myName]; if(!me?.alive) return;
   if(gS.votersDone?.[myName]) return;
