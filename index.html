@@ -30,6 +30,14 @@ select option{background:#0e1c2e}
 .btn-big{padding:15px;font-family:'Orbitron',monospace;font-size:.9rem;letter-spacing:.08em;font-weight:700}
 .btn:disabled{opacity:.3;cursor:not-allowed}
 .sb:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
+.vres{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #1a3050;border-radius:4px;margin-bottom:6px}
+.vres-name{flex:1;font-size:.88rem}
+.vres-bar{height:8px;background:rgba(255,255,255,.05);border-radius:4px;flex:2;overflow:hidden}
+.vres-fill{height:100%;border-radius:4px;transition:width .5s}
+.vres-count{font-family:'Orbitron',monospace;font-size:.8rem;font-weight:700;min-width:24px;text-align:right}
+.vote-btn{width:100%;padding:12px;border:1px solid #1a3050;border-radius:4px;background:transparent;color:#b8cce0;font-family:'Share Tech Mono',monospace;font-size:.88rem;text-align:left;cursor:pointer;margin-bottom:6px;transition:all .15s;display:flex;align-items:center;gap:10px}
+.vote-btn:hover{border-color:#ff3535;background:rgba(255,53,53,.05)}
+.vote-btn.voted{border-color:#00ff88;background:rgba(0,255,136,.07);color:#00ff88;cursor:not-allowed}
 .row{display:flex;gap:8px}.row .btn{flex:1;margin:0}
 .msg{padding:10px 12px;border-radius:4px;font-size:.8rem;line-height:1.5;margin-bottom:10px;border:1px solid}
 .msg-red{background:rgba(255,53,53,.08);border-color:rgba(255,53,53,.4);color:#ff9999}
@@ -263,10 +271,13 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <select id="np-col" style="width:110px">
           <option value="🔴">🔴 Rosso</option><option value="🔵">🔵 Blu</option>
           <option value="🟢">🟢 Verde</option><option value="🟡">🟡 Giallo</option>
-          <option value="🟣">🟣 Viola</option><option value="🟠">🟠 Arancio</option>
+          <option value="🟣">🟣 Viola</option><option value="🟠">🟠 Arancione</option>
           <option value="⬛">⬛ Nero</option><option value="⬜">⬜ Bianco</option>
-          <option value="🩷">🩷 Rosa</option><option value="🩵">🩵 Azzurro</option>
-          <option value="🟤">🟤 Marrone</option><option value="🩶">🩶 Grigio</option>
+          <option value="💗">💗 Rosa</option><option value="🌀">🌀 Azzurro</option>
+          <option value="🟤">🟤 Marrone</option><option value="🌑">🌑 Grigio</option>
+          <option value="🌿">🌿 Salvia</option><option value="🌸">🌸 Ciclamino</option>
+          <option value="⭐">⭐ Oro</option><option value="🔥">🔥 Fuoco</option>
+          <option value="☁️">☁️ Nuvola</option><option value="🌊">🌊 Turchese</option>
         </select>
         <button class="btn btn-blue btn-sm" onclick="gmAddP()">+</button>
       </div>
@@ -299,7 +310,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
 
     <!-- Emergenza OSSIGENO attiva -->
     <div class="card" id="em-oxygen" style="display:none">
-      <h2>🫁 OSSIGENO IN ESAURIMENTO</h2>
+      <h2>=O2 OSSIGENO IN ESAURIMENTO</h2>
       <div class="bt tr" id="em-oxy-td">45</div>
       <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">I codici cambiano ogni 10 secondi. I crewmate devono inserire il codice attivo nella loro postazione.</div>
       <div class="field">
@@ -351,19 +362,27 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     </div>
     <div id="meet-live" style="display:none">
       <div class="card">
-        <h2>⏱ DISCUSSIONE</h2>
-        <div class="bt tg" id="meet-td">3:00</div>
-        <button class="btn btn-yellow" onclick="gmEndDisc()">⏸ TERMINA → VOTA</button>
+        <h2>⏱ FASE ATTUALE</h2>
+        <div class="bt tg" id="meet-td">—</div>
+        <div class="dim ctr mt8" id="meet-phase-label">In attesa...</div>
       </div>
-      <div class="card">
-        <h2>VOTI <span class="dim" style="font-size:.7rem">(clicca per aggiungere voto)</span></h2>
-        <div id="gm-votes"></div>
-        <div class="vr" onclick="addVote('__skip__')" style="border-color:rgba(255,195,0,.3)">
-          <span style="flex:1;color:#ffc300">🙅 ASTENSIONE</span>
-          <div class="vn z" id="v-skip">0</div>
-        </div>
-        <hr>
-        <button class="btn btn-red" onclick="gmResolveVote()">⚖ CALCOLA RISULTATO</button>
+      <div class="card" id="meet-ctrl-waiting">
+        <h2>ATTESA ARRIVI</h2>
+        <div class="dim" id="gm-arrive-count" style="margin-bottom:12px">0 / 0 arrivati</div>
+        <button class="btn btn-blue" onclick="gmStartDiscussion()">▶ INIZIA DISCUSSIONE</button>
+      </div>
+      <div class="card" id="meet-ctrl-disc" style="display:none">
+        <h2>DISCUSSIONE</h2>
+        <button class="btn btn-yellow" onclick="gmStartVoting()">⏸ TERMINA → VOTA</button>
+      </div>
+      <div class="card" id="meet-ctrl-vote" style="display:none">
+        <h2>VOTO</h2>
+        <div class="dim" id="gm-vote-count" style="margin-bottom:12px">0 / 0 hanno votato</div>
+        <button class="btn btn-red" onclick="gmShowResults()">📊 MOSTRA RISULTATI</button>
+      </div>
+      <div class="card" id="meet-ctrl-results" style="display:none">
+        <h2>RISULTATI</h2>
+        <button class="btn btn-red" onclick="gmResolveVote()">⚖ CALCOLA ED ESPELLI</button>
       </div>
     </div>
   </div>
@@ -511,6 +530,58 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         </div>
       </div>
     </div>
+
+    <!-- tab meeting -->
+    <div id="pt-meeting" style="display:none">
+
+      <!-- Nessuna riunione -->
+      <div id="pm-idle">
+        <div class="card" style="margin-top:14px">
+          <div class="msg msg-blue" style="font-size:.78rem;margin-bottom:12px">Premi il tasto se hai trovato un cadavere durante la fase di esplorazione.</div>
+          <button class="btn btn-blue btn-big" onclick="plCallMeeting()">📢 HO TROVATO UN CADAVERE</button>
+        </div>
+      </div>
+
+      <!-- Fase attesa -->
+      <div id="pm-waiting" style="display:none">
+        <div class="card" style="margin-top:14px;text-align:center">
+          <h2>🚨 RIUNIONE CONVOCATA</h2>
+          <div class="rd" style="margin-bottom:16px">Raggiungi subito il tavolo della riunione</div>
+          <button class="btn btn-green btn-big" id="pm-arrive-btn" onclick="plArrive()">✋ SONO ARRIVATO</button>
+          <div class="dim ctr mt8" id="pm-arrive-count">In attesa degli altri...</div>
+        </div>
+      </div>
+
+      <!-- Fase discussione -->
+      <div id="pm-discussion" style="display:none">
+        <div class="card" style="margin-top:14px;text-align:center">
+          <h2>💬 DISCUSSIONE</h2>
+          <div class="bt tg" id="pm-disc-td">3:00</div>
+          <div class="dim ctr mt8">Discuti con gli altri chi potrebbe essere l'impostore</div>
+        </div>
+      </div>
+
+      <!-- Fase voto -->
+      <div id="pm-voting" style="display:none">
+        <div class="card" style="margin-top:14px">
+          <h2>🗳 VOTA</h2>
+          <div class="msg msg-yellow" style="font-size:.78rem;margin-bottom:12px">Il voto è segreto. Scegli chi espellere oppure salta.</div>
+          <div id="pm-vote-list"></div>
+          <button class="btn btn-yellow mt8" id="pm-skip-btn" onclick="plVote('__skip__')">🙅 SALTA</button>
+          <div class="dim ctr mt8" id="pm-vote-status"></div>
+        </div>
+      </div>
+
+      <!-- Fase risultati -->
+      <div id="pm-results" style="display:none">
+        <div class="card" style="margin-top:14px">
+          <h2>📊 RISULTATI VOTO</h2>
+          <div id="pm-results-list"></div>
+        </div>
+      </div>
+
+    </div>
+    
     <!-- tab status -->
     <div id="pt-status" style="display:none">
       <div class="card">
@@ -530,7 +601,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
   <div class="bnav">
     <div class="nb on" id="pnav-role"   onclick="plNav('role')">  <span class="ni">👤</span>RUOLO</div>
     <div class="nb"    id="pnav-status" onclick="plNav('status')"><span class="ni">📊</span>STATO</div>
-    <div class="nb"    id="pnav-meeting" onclick="plCallMeeting()"><span class="ni">📢</span>RIUNIONE</div>
+    <div class="nb"    id="pnav-meeting" onclick="plNav('meeting')"><span class="ni">📢</span>RIUNIONE</div>
   </div>
 
 
@@ -798,6 +869,21 @@ function refreshGM(){
   // votes
   htm('gm-votes',alive.map(p=>{const cnt=gs.votes?.[p.name]||0;return`<div class="vr" onclick="addVote('${p.name}')"><span style="width:22px;text-align:center">${p.color}</span><span style="flex:1">${p.name}</span><div class="vn ${cnt===0?'z':''}" id="v-${p.name.replace(/\W/g,'_')}">${cnt}</div></div>`}).join(''));
   const sk=gs.votes?.['__skip__']||0; const skEl=$('v-skip'); if(skEl){skEl.textContent=sk;skEl.className='vn'+(sk===0?' z':'');}
+  if(gs.phase==='meeting'){
+    const alive=Object.values(gs.players||{}).filter(p=>p.alive).length;
+    const arrivals=Object.keys(gs.meetingArrivals||{}).length;
+    const voted=Object.keys(gs.votersDone||{}).length;
+    txt('gm-arrive-count',`${arrivals} / ${alive} arrivati`);
+    txt('gm-vote-count',`${voted} / ${alive} hanno votato`);
+    const mp=gs.meetingPhase;
+    sh('meet-ctrl-waiting', mp==='waiting');
+    sh('meet-ctrl-disc',    mp==='discussion');
+    sh('meet-ctrl-vote',    mp==='voting');
+    sh('meet-ctrl-results', mp==='results');
+    txt('meet-phase-label', mp==='waiting'?'In attesa arrivi': mp==='discussion'?'Discussione in corso': mp==='voting'?'Votazione in corso':'Risultati');
+    // auto passa ai risultati se tutti hanno votato
+    if(mp==='voting' && voted>0 && voted>=alive) gmShowResults();
+  }
   // Gestione emergenze attive
   const em = gs.activeEmergency;
   sh('em-idle', !em);
@@ -924,7 +1010,7 @@ async function restorePendingEmergency(){
   await update(gRef, { activeEmergency: restored, pendingEmergency: null, phase: 'emergency' });
   await bcast({
     type:'emergency_red',
-    icon: restored.type==='oxygen' ? '🫁' : '⚛️',
+    icon: restored.type==='oxygen' ? 'O2' : '⚛️',
     title: restored.type==='oxygen' ? 'OSSIGENO IN ESAURIMENTO' : 'REATTORE IN SOVRACCARICO',
     body: restored.type==='oxygen'
       ? 'La riunione è finita — torna subito alla tua postazione ossigeno!'
@@ -980,14 +1066,41 @@ window.gmMeeting = async () => {
   const allPlayers=Object.values(gs.players||{});
   const totalDone=allPlayers.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
   await update(ref(db,`games/${gCode}/tasks`),{done:totalDone});
-  await update(gRef, { phase: 'meeting', votes:{}, taskSnapshot: totalDone });  await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:reason==='body'?`Cadavere trovato: ${body}\n\nTutti al QG IMMEDIATAMENTE!`:'Riunione di emergenza!\n\nTutti al QG IMMEDIATAMENTE!',color:'blue'});
+  await update(gRef, { phase:'meeting', meetingPhase:'waiting', votes:{}, votersDone:{}, meetingArrivals:{}, taskSnapshot:totalDone });  
+  await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:reason==='body'?`Cadavere trovato: ${body}\n\nTutti al QG IMMEDIATAMENTE!`:'Riunione di emergenza!\n\nTutti al QG IMMEDIATAMENTE!',color:'blue'});
   gmLog(`📢 Riunione — ${reason==='body'?'cadavere: '+body:'libera'}`,'blue');
   sh('meet-live',true);
   let s=gs.config?.disc||180; updMeetT(s); clearInterval(meetIv);
   meetIv=setInterval(()=>{s--;updMeetT(s);if(s<=0){clearInterval(meetIv);gmEndDisc();}},1000);
 };
 function updMeetT(s){ const e=$('meet-td'),m=Math.floor(s/60),sec=s%60; e.textContent=`${m}:${sec.toString().padStart(2,'0')}`; e.className='bt '+(s>60?'tg':s>20?'ty':'tr'); }
-window.gmEndDisc = () => { clearInterval(meetIv); txt('meet-td','⏸ VOTA!'); $('meet-td').className='bt ty'; };
+window.gmStartDiscussion = async () => {
+  await update(gRef,{meetingPhase:'discussion', discussionStart:Date.now()});
+  const disc=gS.config?.disc||180;
+  clearInterval(meetIv);
+  let s=disc; updMeetT(s);
+  meetIv=setInterval(()=>{s--;updMeetT(s);if(s<=0){clearInterval(meetIv);gmStartVoting();}},1000);
+  sh('meet-ctrl-waiting',false); sh('meet-ctrl-disc',true);
+  txt('meet-phase-label','Discussione in corso');
+};
+
+window.gmStartVoting = async () => {
+  clearInterval(meetIv);
+  await update(gRef,{meetingPhase:'voting'});
+  sh('meet-ctrl-disc',false); sh('meet-ctrl-vote',true);
+  txt('meet-phase-label','Votazione in corso');
+  // Timer automatico 4 minuti
+  let s=240; updMeetT(s);
+  meetIv=setInterval(()=>{s--;updMeetT(s);if(s<=0){clearInterval(meetIv);gmShowResults();}},1000);
+};
+
+window.gmShowResults = async () => {
+  clearInterval(meetIv);
+  await update(gRef,{meetingPhase:'results'});
+  sh('meet-ctrl-vote',false); sh('meet-ctrl-results',true);
+  txt('meet-phase-label','Risultati');
+  txt('meet-td','—');
+};
 
 window.addVote = async name => {
   if(!gRef) return;
@@ -996,6 +1109,7 @@ window.addVote = async name => {
 };
 
 window.gmResolveVote = async () => {
+  await update(gRef,{meetingPhase:null, meetingArrivals:null, votersDone:null});
   const votes=gS.votes||{};
   let maxV=0,maxN=null,tied=false;
   for(const[n,v2] of Object.entries(votes)){
@@ -1098,6 +1212,54 @@ function refreshPL(){
   txt('pl-spt',`${gs.tasks?.done||0} / ${gs.tasks?.total||0}`);
   setPhaseBar('pl-pb','pl-pt',gs.phase);
   htm('pl-pl',all.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span>${!p.alive?'<span class="badge b-ghost">👻</span>':''}</div>`).join(''));
+  // Gestione fasi riunione lato giocatore
+  const mp = gs.meetingPhase;
+  const inMeeting = gs.phase === 'meeting';
+  sh('pm-idle',       !inMeeting);
+  sh('pm-waiting',    inMeeting && mp==='waiting');
+  sh('pm-discussion', inMeeting && mp==='discussion');
+  sh('pm-voting',     inMeeting && mp==='voting');
+  sh('pm-results',    inMeeting && mp==='results');
+
+  if(inMeeting && mp==='waiting'){
+    const arrivals=Object.keys(gs.meetingArrivals||{}).length;
+    const total=Object.values(gs.players||{}).filter(p=>p.alive).length;
+    txt('pm-arrive-count',`${arrivals} / ${total} arrivati`);
+    const myArrival=gs.meetingArrivals?.[myName];
+    if(myArrival){ const b=$('pm-arrive-btn'); if(b){b.disabled=true;b.textContent='✓ Arrivato';} }
+  }
+
+  if(inMeeting && mp==='discussion'){
+    const elapsed=Math.floor((Date.now()-(gs.discussionStart||Date.now()))/1000);
+    const disc=gs.config?.disc||180;
+    const left=Math.max(0,disc-elapsed);
+    const m=Math.floor(left/60),s=left%60;
+    txt('pm-disc-td',`${m}:${s.toString().padStart(2,'0')}`);
+  }
+
+  if(inMeeting && mp==='voting'){
+    const alive=Object.values(gs.players||{}).filter(p=>p.alive);
+    const myVoted=gs.votersDone?.[myName];
+    const totalVoters=alive.length;
+    const doneVoters=Object.keys(gs.votersDone||{}).length;
+    txt('pm-vote-status', myVoted ? `✓ Voto registrato — ${doneVoters}/${totalVoters} hanno votato` : 'Scegli chi espellere');
+    if(!myVoted){
+      htm('pm-vote-list', alive.map(p=>p.name===myName?'':`<button class="vote-btn" data-name="${p.name}" onclick="plVote('${p.name}')">${p.color} ${p.name}</button>`).join(''));
+    }
+  }
+
+  if(inMeeting && mp==='results'){
+    const alive=Object.values(gs.players||{}).filter(p=>p.alive);
+    const votes=gs.votes||{};
+    const maxV=Math.max(1,...Object.values(votes).filter(v=>typeof v==='number'));
+    const sorted=[...alive].sort((a,b)=>(votes[b.name]||0)-(votes[a.name]||0));
+    htm('pm-results-list', sorted.map(p=>{
+      const v=votes[p.name]||0;
+      const pct=Math.round(v/maxV*100);
+      const col=v===maxV&&v>0?'#ff3535':'#00d4ff';
+      return `<div class="vres"><span class="pe">${p.color}</span><span class="vres-name">${p.name}</span><div class="vres-bar"><div class="vres-fill" style="width:${pct}%;background:${col}"></div></div><span class="vres-count" style="color:${col}">${v}</span></div>`;
+    }).join('')+(votes['__skip__']?`<div class="vres"><span class="pe">🙅</span><span class="vres-name">Saltato</span><div class="vres-bar"><div class="vres-fill" style="width:${Math.round((votes['__skip__']||0)/maxV*100)}%;background:#ffc300"></div></div><span class="vres-count" style="color:#ffc300">${votes['__skip__']||0}</span></div>`:''));
+  }
 }
   
 function renderPLTasks(me){
@@ -1129,6 +1291,24 @@ window.plReportDeath = async () => {
   await update(ref(db,`games/${gCode}/players/${myName}`),{alive:false});
   await update(ref(db,`games/${gCode}`),{pendingWinCheck: Date.now()});
 };
+
+window.plArrive = async () => {
+  const btn=$('pm-arrive-btn');
+  if(btn) { btn.disabled=true; btn.textContent='✓ Arrivato'; }
+  await update(ref(db,`games/${gCode}/meetingArrivals/${myName}`),{arrived:true});
+};
+
+window.plVote = async target => {
+  const me=gS?.players?.[myName]; if(!me?.alive) return;
+  if(gS.myVote) return;
+  await update(ref(db,`games/${gCode}/votes`),{[target]:(gS.votes?.[target]||0)+1});
+  await update(ref(db,`games/${gCode}/votersDone`),{[myName]:true});
+  // Disabilita tutti i bottoni voto
+  document.querySelectorAll('.vote-btn').forEach(b=>{b.disabled=true;b.classList.remove('voted');});
+  const sel=target==='__skip__'?$('pm-skip-btn'):document.querySelector(`.vote-btn[data-name="${target}"]`);
+  if(sel) sel.classList.add('voted');
+  txt('pm-vote-status','✓ Voto registrato');
+};
   
 window.plCallMeeting = async () => {
   if(!gS?.started){ alert('Partita non iniziata!'); return; }
@@ -1144,7 +1324,7 @@ window.plCallMeeting = async () => {
     ...gS.activeEmergency,
     startTs: null  // verrà reimpostato dopo la riunione
   } : null;
-  await update(gRef, { phase:'meeting', votes:{}, taskSnapshot:totDone, pendingEmergency: pendingEm, activeEmergency:null });
+  await update(gRef, { phase:'meeting', meetingPhase:'waiting', votes:{}, votersDone:{}, meetingArrivals:{}, taskSnapshot:totDone, pendingEmergency:pendingEm, activeEmergency:null });
   await bcast({ type:'meeting', icon:'📢', title:'RIUNIONE!', body:'È stato trovato un cadavere!\n\nTutti al Quartier Generale IMMEDIATAMENTE!', color:'blue' });
 };
   
@@ -1184,7 +1364,7 @@ window.plSab = async type => {
     emergencyFailed = false;
     await update(gRef, { phase:'emergency', activeEmergency:{ type:'oxygen', startTs:Date.now(), duration:45, code1:'0000', code2:'0000', done1:false, done2:false }});
     startOxyCodes();
-    await bcast({ type:'emergency_red', icon:'🫁', title:'OSSIGENO IN ESAURIMENTO', body:'Recati subito alla tua postazione e inserisci il codice entro 45 secondi!', color:'red' });
+    await bcast({ type:'emergency_red', icon:'O2', title:'OSSIGENO IN ESAURIMENTO', body:'Recati subito alla tua postazione e inserisci il codice entro 45 secondi!', color:'red' });
   } else if(type === 'reactor') {
     emergencyFailed = false;
     await update(gRef, { phase:'emergency', activeEmergency:{ type:'reactor', startTs:Date.now(), duration:45, confirm1:false, confirm2:false }});
@@ -1237,10 +1417,12 @@ window.gmTab = i => {
 
 // ── PLAYER NAV ─────────────────────────────────────────────────────
 window.plNav = tab => {
-  sh('pt-role',   tab==='role');
-  sh('pt-status', tab==='status');
-  $('pnav-role').classList.toggle('on',  tab==='role');
-  $('pnav-status').classList.toggle('on',tab==='status');
+  sh('pt-role',    tab==='role');
+  sh('pt-status',  tab==='status');
+  sh('pt-meeting', tab==='meeting');
+  $('pnav-role').classList.toggle('on',    tab==='role');
+  $('pnav-status').classList.toggle('on',  tab==='status');
+  $('pnav-meeting').classList.toggle('on', tab==='meeting');
 };
 </script>
 </body>
