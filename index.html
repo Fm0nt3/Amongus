@@ -513,7 +513,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           </button>
           <button class="sb sb-y" onclick="plSab('yellow')">
             <span class="si">📡</span>
-            <div><div class="stit">CODICE GIALLO</div><div class="sds">Blocca le comunicazioni — niente riunioni libere</div></div>
+            <div><div class="stit">COMUNICAZIONI</div><div class="sds">Blocca task e riunioni libere per tutti</div></div>
           </button>
           <div class="ct"><div class="cf" id="sab-cdf" style="width:0%"></div></div>
           <div class="dim ctr mt8" id="sab-cdt"></div>
@@ -1208,10 +1208,11 @@ function refreshPL(){
   txt('pl-name',`${me.color} ${me.name}`);
   txt('pl-stat',!gs.started?'In attesa...':!me.alive?'👻 Fantasma':me.role==='impostor'?'🔴 Impostore':'🔵 Crewmate');
   if(!gs.started) return;
+  const commsBlocked = gs.commsBlocked;
   const snap = gs.taskSnapshot ?? null;
   const gpct = (snap !== null && gs.tasks?.total > 0) ? Math.round(snap/gs.tasks.total*100) : 0;
-  $('pl-gtp').style.width = gpct+'%';
-  txt('pl-gtt', snap !== null ? `${snap} / ${gs.tasks?.total||0}` : '— / —');
+  $('pl-gtp').style.width = commsBlocked ? '0%' : gpct+'%';
+  txt('pl-gtt', commsBlocked ? '⛔ SEGNALE ASSENTE' : snap !== null ? `${snap} / ${gs.tasks?.total||0}` : '— / —');
   // role card
   if(me.role==='crewmate'){
     const rc=$('pl-rc'); rc.className='role-card rc-crew';
@@ -1335,9 +1336,12 @@ function refreshPL(){
 function renderPLTasks(me){
   const tasks=me.tasks||[];
   const done=tasks.filter((_,i)=>lTasks['t'+i]).length;
-  $('pl-tp').style.width=tasks.length?Math.round(done/tasks.length*100)+'%':'0%';
-  txt('pl-tt',`${done} / ${tasks.length} completate`);
-  htm('pl-tl',tasks.map((t,i)=>`<div class="ti"><div class="tc ${lTasks['t'+i]?'done':''}" onclick="plToggle(${i},this)">${lTasks['t'+i]?'✓':'○'}</div><span class="tt ${lTasks['t'+i]?'done':''}">${t}</span></div>`).join(''));
+  const blocked=gS.commsBlocked;
+  $('pl-tp').style.width=blocked?'0%':tasks.length?Math.round(done/tasks.length*100)+'%':'0%';
+  txt('pl-tt', blocked ? '⛔ SEGNALE ASSENTE' : `${done} / ${tasks.length} completate`);
+  htm('pl-tl', blocked
+    ? `<div style="text-align:center;padding:24px;font-family:'Orbitron',monospace;font-size:.8rem;color:#3a5570;letter-spacing:.1em">📡 COMUNICAZIONI SOSPESE<br><br>Le task non sono visibili.</div>`
+    : tasks.map((t,i)=>`<div class="ti"><div class="tc ${lTasks['t'+i]?'done':''}" onclick="plToggle(${i},this)">${lTasks['t'+i]?'✓':'○'}</div><span class="tt ${lTasks['t'+i]?'done':''}">${t}</span></div>`).join(''));
 }
 
 window.plToggle = (i,el) => {
