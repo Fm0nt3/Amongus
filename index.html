@@ -946,9 +946,22 @@ function refreshGM(){
   }
   // Gestione emergenze attive
   const em = gs.activeEmergency;
-  sh('em-idle', !em);
+  const comms = gs.commsBlocked;
+  sh('em-idle', !em && !comms);
   sh('em-oxygen', !!(em && em.type==='oxygen'));
   sh('em-reactor', !!(em && em.type==='reactor'));
+  // Mostra mini-gioco comunicazioni automaticamente
+  if(comms && !commsAnimIv){
+    sh('comms-idle', false);
+    sh('comms-card', true);
+    setupKnob();
+    startCommsGame();
+  } else if(!comms){
+    sh('comms-idle', true);
+    sh('comms-card', false);
+    clearInterval(commsAnimIv);
+    commsAnimIv = null;
+  }
   if(em){
     if(em.type==='oxygen'){
       txt('oxy-s1', em.done1 ? '✓ OK' : '');
@@ -1177,12 +1190,15 @@ window.gmLaunchYellow = async () => {
 
 window.gmResolveYellow = async () => {
   clearInterval(commsAnimIv);
+  commsAnimIv = null;
+  commsSyncCount = 0;
   sh('comms-card',false);
   sh('comms-idle',true);
-  await update(gRef,{commsBlocked:false});
+  await update(gRef,{commsBlocked:false, phase:'exploration'});
   await bcast({type:'resolved',icon:'📡',title:'COMUNICAZIONI RIPRISTINATE',body:'Il segnale è stato sincronizzato. Task e riunioni di nuovo disponibili!',color:'green'});
   gmLog('📡 Comunicazioni ripristinate','green');
 };
+
 function checkSabReq(){
   const req=gS.sabRequest;
   if(!req||req.handled){ sh('sab-card',false); return; }
@@ -1598,8 +1614,8 @@ window.plSab = async type => {
     await update(gRef, { phase:'emergency', activeEmergency:{ type:'reactor', startTs:Date.now(), duration:45, confirm1:false, confirm2:false }});
     await bcast({ type:'emergency_red', icon:'⚛️', title:'REATTORE IN SOVRACCARICO', body:'Due postazioni devono confermare simultaneamente!\n\nRecati al Quartier Generale SUBITO!', color:'red' });
   } else {
-    await update(gRef, { commsBlocked: true });
-    await bcast({ type:'emergency_yellow', icon:'📡', title:'CODICE GIALLO', body:'Comunicazioni sospese!\n\nRiunioni libere bloccate fino alla risoluzione.', color:'yellow' });
+    await update(gRef, { commsBlocked: true, phase: 'emergency' });
+    await bcast({ type:'emergency_yellow', icon:'📡', title:'COMUNICAZIONI SOSPESE', body:'Recati alla postazione comunicazioni e sincronizza il segnale!', color:'yellow' });
   }
 };
 // alerts
