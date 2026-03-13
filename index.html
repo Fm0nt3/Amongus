@@ -259,6 +259,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     <div class="card">
       <h2>IMPOSTAZIONI</h2>
       <div class="field"><label>N° IMPOSTORI</label><input type="number" id="cfg-imp" value="2" min="1" max="5"></div>
+      <div class="field"><label>TASK PER GIOCATORE</label><input type="number" id="cfg-tpp" value="5" min="1" max="20"></div>
       <div class="field"><label>DURATA DISCUSSIONE (minuti)</label><input type="number" id="cfg-disc" value="3" min="1" max="10"></div>
       <div class="field"><label>RIUNIONI LIBERE PER GIOCATORE</label><input type="number" id="cfg-fmeet" value="2" min="0" max="5"></div>
       <div class="field"><label>COOLDOWN KILL IMPOSTORI (secondi)</label><input type="number" id="cfg-killcd" value="60" min="10" max="300"></div>
@@ -482,29 +483,10 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
   <div class="plbody">
     <!-- tab ruolo -->
     <div id="pt-role">
-      <div class="card" style="margin-bottom:14px;">
-        <div class="dim" style="margin-bottom:4px;">TASK GLOBALI (aggiornate a ogni riunione)</div>
-        <div class="pw"><div class="pf" id="pl-gtp" style="width:0%"></div></div>
-        <div class="pl" id="pl-gtt">— / —</div>
-        <div class="pl mt8" id="pl-free-meetings">Riunioni libere: —</div>
-      </div>
       <div class="role-card rc-wait" id="pl-rc">
         <span class="ri">⏳</span>
         <div class="rt c-dim">IN ATTESA</div>
         <div class="rd">L'educatore avvierà la partita a breve.</div>
-      </div>
-      <div id="pl-tasks" style="display:none">
-        <div class="card">
-          <h2>LE TUE TASK</h2>
-          <div class="pw"><div class="pf" id="pl-tp" style="width:0%"></div></div>
-          <div class="pl mt8" id="pl-tt">0 / 0</div>
-          <div id="pl-tl" style="margin-top:10px"></div>
-        </div>
-        <div class="card" id="pl-dead-card">
-          <h2>SEI STATO ELIMINATO?</h2>
-          <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">Premi solo se un impostore ti ha appena eliminato. Il GM verrà aggiornato automaticamente.</div>
-          <button class="kb" id="pl-dead-btn" onclick="plReportDeath()">💀 SONO MORTO</button>
-        </div>
       </div>
       <div id="pl-imp" style="display:none">
         <div class="card"><h2>I TUOI COMPLICI</h2><div id="pl-acc" class="dim">—</div></div>
@@ -517,7 +499,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <div class="card">
           <h2>SABOTAGGI</h2>
           <button class="sb sb-r" onclick="plSab('oxygen')">
-            <span class="si">02</span>
+            <span class="si">🫁</span>
             <div><div class="stit">OSSIGENO</div><div class="sds">Inserire i codici in due stanze entro il timer</div></div>
           </button>
           <button class="sb sb-r" onclick="plSab('reactor')">
@@ -534,6 +516,28 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
       </div>
     </div>
 
+    <!-- tab task -->
+    <div id="pt-tasks" style="display:none">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="dim" style="margin-bottom:4px;">TASK GLOBALI (aggiornate a ogni riunione)</div>
+        <div class="pw"><div class="pf" id="pl-gtp" style="width:0%"></div></div>
+        <div class="pl" id="pl-gtt">— / —</div>
+        <div class="pl mt8" id="pl-free-meetings">Riunioni libere: —</div>
+      </div>
+      <div class="card">
+        <h2>LE TUE TASK</h2>
+        <div class="pw"><div class="pf" id="pl-tp" style="width:0%"></div></div>
+        <div class="pl mt8" id="pl-tt">0 / 0</div>
+        <div id="pl-tl" style="margin-top:10px"></div>
+      </div>
+      <div class="card" id="pl-dead-card">
+        <h2>SEI STATO ELIMINATO?</h2>
+        <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">Premi solo se un impostore ti ha appena eliminato. Il GM verrà aggiornato automaticamente.</div>
+        <button class="kb" id="pl-dead-btn" onclick="plReportDeath()">💀 SONO MORTO</button>
+      </div>
+    </div>
+  </div>
+    
     <!-- tab meeting -->
     <div id="pt-meeting" style="display:none">
 
@@ -609,8 +613,9 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     </div>
   </div>
   <div class="bnav">
-    <div class="nb on" id="pnav-role"   onclick="plNav('role')">  <span class="ni">👤</span>RUOLO</div>
-    <div class="nb"    id="pnav-status" onclick="plNav('status')"><span class="ni">📊</span>STATO</div>
+    <div class="nb on" id="pnav-role"    onclick="plNav('role')">   <span class="ni">👤</span>RUOLO</div>
+    <div class="nb"    id="pnav-tasks"   onclick="plNav('tasks')">  <span class="ni">✅</span>TASK</div>
+    <div class="nb"    id="pnav-status"  onclick="plNav('status')"> <span class="ni">📊</span>STATO</div>
     <div class="nb"    id="pnav-meeting" onclick="plNav('meeting')"><span class="ni">📢</span>RIUNIONE</div>
   </div>
 
@@ -786,17 +791,17 @@ window.gmStart = async () => {
   if(gmPL.length<4){ alert('Servono almeno 4 giocatori!'); return; }
   const impN=parseInt(gv('cfg-imp')), totT=parseInt(gv('cfg-tasks')),
       disc=parseInt(gv('cfg-disc'))*60, fmeet=parseInt(gv('cfg-fmeet')||2),
-      killCd=parseInt(gv('cfg-killcd')), code=gv('cfg-code').toUpperCase();  
-  if(impN>=gmPL.length){ alert('Troppi impostori!'); return; }
+      tpp=parseInt(gv('cfg-tpp')||5),
+      killCd=parseInt(gv('cfg-killcd')), code=gv('cfg-code').toUpperCase();  if(impN>=gmPL.length){ alert('Troppi impostori!'); return; }
   gCode=code; gRef=ref(db,`games/${code}`);
 
   const sh2=shuffle([...gmPL]), imps=new Set(sh2.slice(0,impN).map(p=>p.name));
-  const crewN=gmPL.length-impN, tEach=Math.ceil(totT/crewN);
+  const crewN=gmPL.length-impN, tEach=tpp;
   const players={};
   gmPL.forEach(p=>{
     const imp=imps.has(p.name);
     players[p.name]={name:p.name,color:p.color,role:imp?'impostor':'crewmate',alive:true,tasksDone:0,
-      tasks:imp?[]:shuffle([...TASKS]).slice(0,tEach),accomplices:imp?[...imps].filter(n=>n!==p.name):[]};
+  tasks:shuffle([...TASKS]).slice(0,tEach),accomplices:imp?[...imps].filter(n=>n!==p.name):[]};
   });
 
   const realTotal = gmPL.filter(p=>!imps.has(p.name)).reduce((_,__)=>_+tEach,0);
@@ -1092,21 +1097,16 @@ window.gmMeeting = async () => {
   const maxFree=gs.config?.fmeet??2;
   const used=gs.players?.[caller]?.freeMeetings||0;
   if(used>=maxFree){ alert(`❌ ${caller} ha già usato tutte le ${maxFree} riunioni libere!`); return; }
-  await update(ref(db,`games/${gCode}/players/${caller}`),{freeMeetings:used+1});  if(reason==='free'){
-    if(gs.commsBlocked){alert('❌ Comunicazioni sospese!');return;}
-  }
-  const body=gv('meet-body');
-  // Calcola task completate sommando tasksDone di tutti i crewmate
+  await update(ref(db,`games/${gCode}/players/${caller}`),{freeMeetings:used+1});
+  if(gs.commsBlocked){ alert('❌ Comunicazioni sospese!'); return; }
   const allPlayers=Object.values(gs.players||{});
   const totalDone=allPlayers.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
   await update(ref(db,`games/${gCode}/tasks`),{done:totalDone});
-  await update(gRef, { phase:'meeting', meetingPhase:'waiting', votes:{}, votersDone:{}, voteDetails:{}, meetingArrivals:{}, taskSnapshot:totalDone });  
+  await update(gRef,{phase:'meeting',meetingPhase:'waiting',votes:{},votersDone:{},voteDetails:{},meetingArrivals:{},taskSnapshot:totalDone});
   const callerP=gs.players?.[caller];
   await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:`${callerP?.color||''} ${caller} ha chiamato una riunione!\n\nTutti al tavolo IMMEDIATAMENTE!`,color:'blue'});
-  gmLog(`📢 Riunione — ${reason==='body'?'cadavere: '+body:'libera'}`,'blue');
+  gmLog(`📢 Riunione libera — chiamata da ${caller}`,'blue');
   sh('meet-live',true);
-  let s=gs.config?.disc||180; updMeetT(s); clearInterval(meetIv);
-  meetIv=setInterval(()=>{s--;updMeetT(s);if(s<=0){clearInterval(meetIv);gmEndDisc();}},1000);
 };
 function updMeetT(s){ const e=$('meet-td'),m=Math.floor(s/60),sec=s%60; e.textContent=`${m}:${sec.toString().padStart(2,'0')}`; e.className='bt '+(s>60?'tg':s>20?'ty':'tr'); }
 window.gmStartDiscussion = async () => {
@@ -1216,7 +1216,7 @@ function refreshPL(){
   if(me.role==='crewmate'){
     const rc=$('pl-rc'); rc.className='role-card rc-crew';
     rc.innerHTML='<span class="ri">🔵</span><div class="rt c-crew">CREWMATE</div><div class="rd">Completa le task e scopri gli impostori!<br>Non parlare durante la fase di esplorazione.</div>';
-    sh('pl-tasks',true); sh('pl-imp',false); renderPLTasks(me);
+    sh('pt-tasks',true); sh('pl-imp',false); renderPLTasks(me);
     const maxFree=gs.config?.fmeet??2;
     const usedFree=me.freeMeetings||0;
     const leftFree=maxFree-usedFree;
@@ -1229,7 +1229,7 @@ function refreshPL(){
   } else {
     const rc=$('pl-rc'); rc.className='role-card rc-imp';
     rc.innerHTML='<span class="ri">🔴</span><div class="rt c-imp">IMPOSTORE</div><div class="rd">Elimina i crewmate senza farti scoprire.<br>Simula di svolgere le task!</div>';
-    sh('pl-tasks',false); sh('pl-imp',true);
+    sh('pt-tasks',true); sh('pl-imp',true);
     if(!killCdIv){
       const killTs = localStorage.getItem(`killTs_${gCode}_${myName}`);
       if(killTs){
@@ -1521,9 +1521,11 @@ window.gmTab = i => {
 // ── PLAYER NAV ─────────────────────────────────────────────────────
 window.plNav = tab => {
   sh('pt-role',    tab==='role');
+  sh('pt-tasks',   tab==='tasks');
   sh('pt-status',  tab==='status');
   sh('pt-meeting', tab==='meeting');
   $('pnav-role').classList.toggle('on',    tab==='role');
+  $('pnav-tasks').classList.toggle('on',   tab==='tasks');
   $('pnav-status').classList.toggle('on',  tab==='status');
   $('pnav-meeting').classList.toggle('on', tab==='meeting');
 };
