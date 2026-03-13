@@ -427,7 +427,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     </div>
     <div id="post1-active" style="display:none">
       <div class="card">
-        <h2>🫁 POSTAZIONE 1 — OSSIGENO</h2>
+        <h2>O2 POSTAZIONE 1 — OSSIGENO</h2>
         <div class="dim ctr" style="margin-bottom:8px">Inserisci il codice che vedi qui sotto</div>
         <div style="font-family:'Orbitron',monospace;font-size:3rem;color:#ffc300;text-align:center;padding:16px;background:#060f1a;border-radius:6px;margin-bottom:12px" id="post1-code">—</div>
         <div class="bt tr" id="post1-td" style="font-size:2rem;padding:8px">—</div>
@@ -447,7 +447,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
     </div>
     <div id="post2-active" style="display:none">
       <div class="card">
-        <h2>🫁 POSTAZIONE 2 — OSSIGENO</h2>
+        <h2>O2 POSTAZIONE 2 — OSSIGENO</h2>
         <div class="dim ctr" style="margin-bottom:8px">Inserisci il codice che vedi qui sotto</div>
         <div style="font-family:'Orbitron',monospace;font-size:3rem;color:#ffc300;text-align:center;padding:16px;background:#060f1a;border-radius:6px;margin-bottom:12px" id="post2-code">—</div>
         <div class="bt tr" id="post2-td" style="font-size:2rem;padding:8px">—</div>
@@ -534,7 +534,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <div class="card">
           <h2>SABOTAGGI</h2>
           <button class="sb sb-r" onclick="plSab('oxygen')">
-            <span class="si">🫁</span>
+            <span class="si">O2</span>
             <div><div class="stit">OSSIGENO</div><div class="sds">Inserire i codici in due stanze entro il timer</div></div>
           </button>
           <button class="sb sb-r" onclick="plSab('reactor')">
@@ -1265,7 +1265,7 @@ window.gmResolveVote = async () => {
   }
   if(tied||!maxN||maxN==='__skip__'||maxV===0){
     const pending2=gS.pendingEmergency;
-    const emWarning2=pending2?(pending2.type==='oxygen'?'\n\n🫁 L\'emergenza ossigeno riprende subito!':'\n\n⚛️ Il reattore riprende subito!'):'';
+    const emWarning2=pending2?(pending2.type==='oxygen'?'\n\nO2 L\'emergenza ossigeno riprende subito!':'\n\n⚛️ Il reattore riprende subito!'):'';
     await bcast({type:'vote_result',icon:'⚖',title:'NESSUNA ESPULSIONE',body:`Pareggio o astensione. La partita riprende.${emWarning2}`,color:'blue'});
     await restorePendingEmergency() || await update(gRef,{phase:'exploration'}); 
     gmLog('Voto: nessuna espulsione','yellow');
@@ -1273,7 +1273,7 @@ window.gmResolveVote = async () => {
     const p=gS.players[maxN],isI=p?.role==='impostor';
     await update(ref(db,`games/${gCode}/players/${maxN}`),{alive:false});
     const pending=gS.pendingEmergency;
-    const emWarning=pending?(pending.type==='oxygen'?'\n\n🫁 L\'emergenza ossigeno riprende subito!':'\n\n⚛️ Il reattore riprende subito!'):'';
+    const emWarning=pending?(pending.type==='oxygen'?'\n\nO2 L\'emergenza ossigeno riprende subito!':'\n\n⚛️ Il reattore riprende subito!'):'';
     await bcast({type:'eject',icon:'⚖',title:`${maxN} ESPULSO (${maxV} voti)`,body:`Era un ${isI?'🔴 IMPOSTORE':'🔵 CREWMATE'}!${emWarning}`,color:isI?'red':'blue'});
     await restorePendingEmergency() || await update(gRef,{phase:'exploration'});
     gmLog(`⚖ ${maxN} espulso — era ${p?.role}`,isI?'red':'blue'); await gmCheckWin();
