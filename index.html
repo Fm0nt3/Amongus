@@ -118,6 +118,10 @@ select option{background:#0e1c2e}
 .nb{flex:1;padding:10px 4px;text-align:center;cursor:pointer;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.05em;color:#3a5570;transition:color .15s}
 .nb .ni{font-size:1.3rem;display:block;margin-bottom:2px}
 .nb.on{color:#00d4ff}
+.tab-lock{position:absolute;inset:0;background:#07101a;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;min-height:200px}
+.tab-lock-icon{font-size:2.5rem;margin-bottom:12px}
+.tab-lock-title{font-family:'Orbitron',monospace;font-size:.75rem;letter-spacing:.15em;color:#3a5570;margin-bottom:20px}
+.tp{position:relative}
 
 #aov{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.88);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
 #aov.on{display:flex}
@@ -248,6 +252,16 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
 
   <!-- T1 SETUP -->
   <div class="tp" id="t1">
+    <div class="card" id="unlock-all-card">
+      <h2>🔓 SBLOCCA TUTTO</h2>
+      <div class="field">
+        <input type="password" id="unlock-all-input" placeholder="Inserisci PIN" style="text-align:center;font-size:1.1rem;letter-spacing:.3em" onkeydown="if(event.key==='Enter')unlockAll()">
+      </div>
+      <div class="row">
+        <button class="btn btn-green" onclick="unlockAll()">🔓 SBLOCCA TUTTO</button>
+        <button class="btn btn-yellow" onclick="lockAll()">🔒 BLOCCA TUTTO</button>
+      </div>
+    </div>
     <div class="card">
       <h2>CODICE PARTITA</h2>
       <div class="fl">
@@ -262,6 +276,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
       <div class="field"><label>TASK PER GIOCATORE</label><input type="number" id="cfg-tpp" value="5" min="1" max="20"></div>
       <div class="field"><label>DURATA DISCUSSIONE (minuti)</label><input type="number" id="cfg-disc" value="3" min="1" max="10"></div>
       <div class="field"><label>RIUNIONI LIBERE PER GIOCATORE</label><input type="number" id="cfg-fmeet" value="2" min="0" max="5"></div>
+      <div class="field"><label>PIN POSTAZIONI GM</label><input type="text" id="cfg-pin" placeholder="es. 1234" maxlength="8"></div>
       <div class="field"><label>COOLDOWN KILL IMPOSTORI (secondi)</label><input type="number" id="cfg-killcd" value="60" min="10" max="300"></div>
     </div>
     <div class="card">
@@ -822,7 +837,8 @@ window.gmStart = async () => {
   const impN=parseInt(gv('cfg-imp')), totT=parseInt(gv('cfg-tasks')),
       disc=parseInt(gv('cfg-disc'))*60, fmeet=parseInt(gv('cfg-fmeet')||2),
       tpp=parseInt(gv('cfg-tpp')||5),
-      killCd=parseInt(gv('cfg-killcd')), code=gv('cfg-code').toUpperCase();  if(impN>=gmPL.length){ alert('Troppi impostori!'); return; }
+      killCd=parseInt(gv('cfg-killcd')), pin=gv('cfg-pin')||'',
+      code=gv('cfg-code').toUpperCase();
   gCode=code; gRef=ref(db,`games/${code}`);
 
   const sh2=shuffle([...gmPL]), imps=new Set(sh2.slice(0,impN).map(p=>p.name));
@@ -837,7 +853,7 @@ window.gmStart = async () => {
   const realTotal = gmPL.filter(p=>!imps.has(p.name)).reduce((_,__)=>_+tEach,0);
   await set(gRef,{code,started:true,phase:'exploration',
     tasks:{done:0,total:realTotal},meetings:{total:0},
-    config:{impN,disc,killCd,fmeet},players,alerts:{},votes:{},
+    config:{impN,disc,killCd,fmeet,pin},players,alerts:{},votes:{},
     sabRequest:null,commsBlocked:false,victory:null});
 
   txt('gm-code','codice: '+code);
@@ -849,7 +865,12 @@ window.gmStart = async () => {
 
 // ── GM LISTENER ────────────────────────────────────────────────────
 function listenGM(){
-  onValue(gRef,snap=>{ if(!snap.exists()) return; gS=snap.val(); refreshGM(); checkSabReq(); autoWinCheck(); });
+  onValue(gRef,snap=>{
+    if(!snap.exists()) return; gS=snap.val(); refreshGM(); autoWinCheck(); checkSabReq();
+    // Inizializza i lock una sola volta
+    if(!document.querySelector('.tab-lock')){ renderTabLocks(); applyAllLocks(); }
+    else applyAllLocks();
+  });
   setInterval(()=>{ if(gS.activeEmergency) tickEmergencyTimer(); }, 1000);
 }
 
@@ -1652,6 +1673,73 @@ window.closeVictory = async () => {
   localStorage.removeItem('gmSession');
   showScreen('s-lg');
 };
+
+// ── TAB LOCK SYSTEM ────────────────────────────────────────────────
+const tabLockState = {}; // tiene traccia di quali tab sono sbloccate
+
+function renderTabLocks(){
+  document.querySelectorAll('.tp').forEach((tp, i) => {
+    const lockId = `tab-lock-${i}`;
+    if(tp.querySelector('.tab-lock')) return; // già presente
+    const lock = document.createElement('div');
+    lock.className = 'tab-lock';
+    lock.id = lockId;
+    lock.innerHTML = `
+      <div class="tab-lock-icon">🔒</div>
+      <div class="tab-lock-title">POSTAZIONE PROTETTA</div>
+      <div class="field" style="width:100%;max-width:280px">
+        <input type="password" id="lock-in-${i}" placeholder="Inserisci PIN" style="text-align:center;font-size:1.2rem;letter-spacing:.3em" onkeydown="if(event.key==='Enter')unlockTab(${i})">
+      </div>
+      <button class="btn btn-blue" style="max-width:280px;margin-top:8px" onclick="unlockTab(${i})">🔓 SBLOCCA</button>
+    `;
+    tp.insertBefore(lock, tp.firstChild);
+  });
+}
+
+window.unlockTab = (i) => {
+  const pin = gS?.config?.pin || '';
+  if(!pin){ tabLockState[i]=true; applyLock(i); return; } // nessun PIN = sempre aperto
+  const input = $(`lock-in-${i}`);
+  if(!input) return;
+  if(input.value === pin){
+    tabLockState[i] = true;
+    applyLock(i);
+  } else {
+    input.value='';
+    input.style.borderColor='#ff3535';
+    setTimeout(()=>{ input.style.borderColor=''; },1000);
+    alert('❌ PIN errato!');
+  }
+};
+
+window.unlockAll = () => {
+  const pin = gS?.config?.pin || '';
+  const input = $('unlock-all-input');
+  if(!input) return;
+  if(input.value === pin || !pin){
+    document.querySelectorAll('.tp').forEach((_, i) => { tabLockState[i]=true; applyLock(i); });
+    input.value='';
+    sh('unlock-all-card', false);
+    gmLog('🔓 Tutte le postazioni sbloccate','green');
+  } else {
+    input.value='';
+    alert('❌ PIN errato!');
+  }
+};
+
+window.lockAll = () => {
+  document.querySelectorAll('.tp').forEach((_, i) => { tabLockState[i]=false; applyLock(i); });
+  gmLog('🔒 Tutte le postazioni bloccate','yellow');
+};
+
+function applyLock(i){
+  const lock=$(`tab-lock-${i}`);
+  if(lock) lock.style.display = tabLockState[i] ? 'none' : 'flex';
+}
+
+function applyAllLocks(){
+  document.querySelectorAll('.tp').forEach((_,i) => applyLock(i));
+}
 
 // ── GM TABS ────────────────────────────────────────────────────────
 window.gmTab = i => {
