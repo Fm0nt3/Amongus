@@ -1216,7 +1216,7 @@ function refreshPL(){
   if(me.role==='crewmate'){
     const rc=$('pl-rc'); rc.className='role-card rc-crew';
     rc.innerHTML='<span class="ri">🔵</span><div class="rt c-crew">CREWMATE</div><div class="rd">Completa le task e scopri gli impostori!<br>Non parlare durante la fase di esplorazione.</div>';
-    sh('pt-tasks',true); sh('pl-imp',false); renderPLTasks(me);
+    sh('pl-imp',false); renderPLTasks(me);
     const maxFree=gs.config?.fmeet??2;
     const usedFree=me.freeMeetings||0;
     const leftFree=maxFree-usedFree;
@@ -1229,7 +1229,7 @@ function refreshPL(){
   } else {
     const rc=$('pl-rc'); rc.className='role-card rc-imp';
     rc.innerHTML='<span class="ri">🔴</span><div class="rt c-imp">IMPOSTORE</div><div class="rd">Elimina i crewmate senza farti scoprire.<br>Simula di svolgere le task!</div>';
-    sh('pt-tasks',true); sh('pl-imp',true);
+    sh('pl-imp',true);
     if(!killCdIv){
       const killTs = localStorage.getItem(`killTs_${gCode}_${myName}`);
       if(killTs){
