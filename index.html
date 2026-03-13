@@ -260,7 +260,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
       <h2>IMPOSTAZIONI</h2>
       <div class="field"><label>N° IMPOSTORI</label><input type="number" id="cfg-imp" value="2" min="1" max="5"></div>
       <div class="field"><label>DURATA DISCUSSIONE (minuti)</label><input type="number" id="cfg-disc" value="3" min="1" max="10"></div>
-      <div class="field"><label>MAX RIUNIONI LIBERE</label><input type="number" id="cfg-fmeet" value="2" min="0" max="5"></div>
+      <div class="field"><label>RIUNIONI LIBERE PER GIOCATORE</label><input type="number" id="cfg-fmeet" value="2" min="0" max="5"></div>
       <div class="field"><label>COOLDOWN KILL IMPOSTORI (secondi)</label><input type="number" id="cfg-killcd" value="60" min="10" max="300"></div>
     </div>
     <div class="card">
@@ -354,8 +354,12 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
   <!-- T4 RIUNIONE -->
   <div class="tp" id="t4">
     <div class="card">
-      <h2>CONVOCA RIUNIONE</h2>
-      <div class="field"><label>MOTIVO</label><select id="meet-reason"><option value="free">🚨 Riunione libera</option></select></div>
+      <h2>CONVOCA RIUNIONE LIBERA</h2>
+      <div class="field">
+        <label>CHI LA CHIAMA</label>
+        <select id="meet-caller" onchange="gmCheckCaller()"><option value="">— seleziona giocatore —</option></select>
+      </div>
+      <div class="msg msg-yellow" id="meet-caller-warn" style="display:none;font-size:.78rem">❌ Questo giocatore ha esaurito le riunioni libere!</div>
       <button class="btn btn-blue btn-big" onclick="gmMeeting()">📢 CONVOCA RIUNIONE</button>
     </div>
     <div id="meet-live" style="display:none">
@@ -482,6 +486,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <div class="dim" style="margin-bottom:4px;">TASK GLOBALI (aggiornate a ogni riunione)</div>
         <div class="pw"><div class="pf" id="pl-gtp" style="width:0%"></div></div>
         <div class="pl" id="pl-gtt">— / —</div>
+        <div class="pl mt8" id="pl-free-meetings">Riunioni libere: —</div>
       </div>
       <div class="role-card rc-wait" id="pl-rc">
         <span class="ri">⏳</span>
@@ -780,8 +785,8 @@ window.randCode = () => {
 window.gmStart = async () => {
   if(gmPL.length<4){ alert('Servono almeno 4 giocatori!'); return; }
   const impN=parseInt(gv('cfg-imp')), totT=parseInt(gv('cfg-tasks')),
-        disc=parseInt(gv('cfg-disc'))*60, fmeet=parseInt(gv('cfg-fmeet')),
-        killCd=parseInt(gv('cfg-killcd')), code=gv('cfg-code').toUpperCase();
+      disc=parseInt(gv('cfg-disc'))*60, fmeet=parseInt(gv('cfg-fmeet')||2),
+      killCd=parseInt(gv('cfg-killcd')), code=gv('cfg-code').toUpperCase();  
   if(impN>=gmPL.length){ alert('Troppi impostori!'); return; }
   gCode=code; gRef=ref(db,`games/${code}`);
 
@@ -796,7 +801,7 @@ window.gmStart = async () => {
 
   const realTotal = gmPL.filter(p=>!imps.has(p.name)).reduce((_,__)=>_+tEach,0);
   await set(gRef,{code,started:true,phase:'exploration',
-    tasks:{done:0,total:realTotal},meetings:{maxFree:fmeet,total:0},
+    tasks:{done:0,total:realTotal},meetings:{total:0},
     config:{impN,disc,killCd,fmeet},players,alerts:{},votes:{},
     sabRequest:null,commsBlocked:false,victory:null});
 
@@ -864,6 +869,23 @@ function refreshGM(){
   txt('g-progt',`${gs.tasks?.done||0} / ${gs.tasks?.total||0} — ${pct}%`);
   sv('g-tin',gs.tasks?.done||0);
   setPhaseBar('gm-pb','gm-pt',gs.phase);
+  // Tendina chiamante riunione
+  const callerSel=$('meet-caller');
+  if(callerSel){
+    const currentVal=callerSel.value;
+    const maxFree=gs.config?.fmeet??2;
+    callerSel.innerHTML='<option value="">— seleziona giocatore —</option>'+
+      alive.map(p=>{
+        const used=gs.players[p.name]?.freeMeetings||0;
+        const left=maxFree-used;
+        return `<option value="${p.name}" ${left<=0?'style="color:#ff3535"':''}>${p.color} ${p.name} (${left} riun. rimaste)</option>`;
+      }).join('');
+    callerSel.value=currentVal;
+    // Mostra avviso se il selezionato ha finito
+    const selPlayer=gs.players?.[currentVal];
+    const selUsed=selPlayer?.freeMeetings||0;
+    sh('meet-caller-warn', !!currentVal && selUsed>=(gs.config?.fmeet??2));
+  }
   if(gs.phase==='meeting') sh('meet-live',true);
   if(gs.phase!=='meeting'){ clearInterval(meetIv); meetIv=null; sh('meet-live',false); }
   htm('gm-pl',all.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span><span class="badge ${p.alive?(p.role==='crewmate'?'b-crew':'b-imp'):'b-ghost'}">${!p.alive?'👻':p.role==='crewmate'?'CREW':'IMP'}</span></div>`).join(''));
@@ -935,6 +957,12 @@ function refreshGM(){
   }
 }
 
+window.gmCheckCaller = () => {
+  const name=gv('meet-caller');
+  const maxFree=gS.config?.fmeet??2;
+  const used=gS.players?.[name]?.freeMeetings||0;
+  sh('meet-caller-warn', !!name && used>=maxFree);
+};
 // ── GM ACTIONS ─────────────────────────────────────────────────────
 window.gmSetPhase = async ph => {
   if(!gRef) return;
@@ -1057,9 +1085,14 @@ window.gmDenySab = async () => {
 
 // meeting
 window.gmMeeting = async () => {
+  const gs=gS;
+  const caller=gv('meet-caller');
+  if(!caller){ alert('Seleziona chi chiama la riunione!'); return; }
   if(gS.activeEmergency){ alert('❌ Impossibile convocare una riunione durante un\'emergenza!'); return; }
-  const reason=gv('meet-reason'), gs=gS;
-  if(reason==='free'){
+  const maxFree=gs.config?.fmeet??2;
+  const used=gs.players?.[caller]?.freeMeetings||0;
+  if(used>=maxFree){ alert(`❌ ${caller} ha già usato tutte le ${maxFree} riunioni libere!`); return; }
+  await update(ref(db,`games/${gCode}/players/${caller}`),{freeMeetings:used+1});  if(reason==='free'){
     if(gs.commsBlocked){alert('❌ Comunicazioni sospese!');return;}
   }
   const body=gv('meet-body');
@@ -1068,7 +1101,8 @@ window.gmMeeting = async () => {
   const totalDone=allPlayers.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
   await update(ref(db,`games/${gCode}/tasks`),{done:totalDone});
   await update(gRef, { phase:'meeting', meetingPhase:'waiting', votes:{}, votersDone:{}, voteDetails:{}, meetingArrivals:{}, taskSnapshot:totalDone });  
-  await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:reason==='body'?`Cadavere trovato: ${body}\n\nTutti al QG IMMEDIATAMENTE!`:'Riunione di emergenza!\n\nTutti al QG IMMEDIATAMENTE!',color:'blue'});
+  const callerP=gs.players?.[caller];
+  await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:`${callerP?.color||''} ${caller} ha chiamato una riunione!\n\nTutti al tavolo IMMEDIATAMENTE!`,color:'blue'});
   gmLog(`📢 Riunione — ${reason==='body'?'cadavere: '+body:'libera'}`,'blue');
   sh('meet-live',true);
   let s=gs.config?.disc||180; updMeetT(s); clearInterval(meetIv);
@@ -1183,6 +1217,11 @@ function refreshPL(){
     const rc=$('pl-rc'); rc.className='role-card rc-crew';
     rc.innerHTML='<span class="ri">🔵</span><div class="rt c-crew">CREWMATE</div><div class="rd">Completa le task e scopri gli impostori!<br>Non parlare durante la fase di esplorazione.</div>';
     sh('pl-tasks',true); sh('pl-imp',false); renderPLTasks(me);
+    const maxFree=gs.config?.fmeet??2;
+    const usedFree=me.freeMeetings||0;
+    const leftFree=maxFree-usedFree;
+    const freeEl=$('pl-free-meetings');
+    if(freeEl) freeEl.textContent=`Riunioni libere rimaste: ${leftFree} / ${maxFree}`;
     const deadBtn=$('pl-dead-btn');
     if(deadBtn) { deadBtn.disabled=!me.alive; deadBtn.textContent=me.alive?'💀 SONO MORTO':'👻 SEI GIÀ UN FANTASMA'; }
     const deadCard=$('pl-dead-card');
