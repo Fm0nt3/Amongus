@@ -1697,11 +1697,10 @@ function renderTabLocks(){
 }
 
 window.unlockTab = (i) => {
-  const pin = gS?.config?.pin || '';
-  if(!pin){ tabLockState[i]=true; applyLock(i); return; } // nessun PIN = sempre aperto
+  const pin = '1001';
   const input = $(`lock-in-${i}`);
   if(!input) return;
-  if(input.value === pin){
+  if(input.value === pin){    
     tabLockState[i] = true;
     applyLock(i);
   } else {
@@ -1713,10 +1712,10 @@ window.unlockTab = (i) => {
 };
 
 window.unlockAll = () => {
-  const pin = gS?.config?.pin || '';
+  const pin = '1001';
   const input = $('unlock-all-input');
   if(!input) return;
-  if(input.value === pin || !pin){
+  if(input.value === pin){    
     document.querySelectorAll('.tp').forEach((_, i) => { tabLockState[i]=true; applyLock(i); });
     input.value='';
     sh('unlock-all-card', false);
