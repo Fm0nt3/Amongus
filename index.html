@@ -334,16 +334,46 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
       <div class="msg msg-yellow" id="rea-status" style="font-size:.78rem">In attesa delle due conferme...</div>
       <button class="btn btn-red mt8" onclick="gmFailEmergency()">✗ DICHIARA FALLITA</button>
     </div>
-    <div class="card">
-      <h2>📡 CODICE GIALLO — COMUNICAZIONI</h2>
-      <div class="msg msg-blue" style="margin-bottom:12px;font-size:.78rem">Blocca le riunioni libere finché non viene risolta.</div>
-      <div class="field"><label>STANZA</label><input id="yel-room" placeholder="es. Sala Radio"></div>
-      <div class="field"><label>COSA FARE</label><input id="yel-act" placeholder="es. Inserire codice 4271"></div>
-      <button class="btn btn-yellow btn-big" onclick="gmLaunchYellow()">📡 LANCIA CODICE GIALLO</button>
+    <div class="card" id="comms-idle">
+      <h2>📡 COMUNICAZIONI</h2>
+      <div class="msg msg-blue" style="margin-bottom:12px;font-size:.78rem">Blocca task e riunioni libere per tutti i giocatori.</div>
+      <button class="btn btn-yellow btn-big" onclick="gmLaunchYellow()">📡 ATTIVA SABOTAGGIO</button>
     </div>
-    <div class="card" id="comms-card" style="display:none">
-      <div class="msg msg-yellow">📡 COMUNICAZIONI SOSPESE — riunioni libere bloccate</div>
-      <button class="btn btn-green mt8" onclick="gmResolveYellow()">✓ COMUNICAZIONI RIPRISTINATE</button>
+    <div id="comms-card" style="display:none">
+      <div class="card">
+        <h2>📡 COMUNICAZIONI SOSPESE</h2>
+        <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">Qualcuno deve recarsi alla postazione e sincronizzare il segnale.</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <div style="flex:1;text-align:center">
+            <div style="font-size:.65rem;color:#3a5570;margin-bottom:4px;letter-spacing:.1em">SEGNALE TARGET</div>
+            <canvas id="wave-target" width="150" height="70" style="background:#1a2a0a;border:1px solid #2a4a10;border-radius:4px;width:100%"></canvas>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:.65rem;color:#3a5570;margin-bottom:4px;letter-spacing:.1em">SEGNALE ATTUALE</div>
+            <canvas id="wave-current" width="150" height="70" style="background:#1a2a0a;border:1px solid #2a4a10;border-radius:4px;width:100%"></canvas>
+          </div>
+        </div>
+        <!-- Manopola -->
+        <div style="text-align:center;margin-bottom:12px">
+          <div style="font-size:.65rem;color:#3a5570;margin-bottom:8px;letter-spacing:.1em">FREQUENZA</div>
+          <div id="comms-knob" style="width:80px;height:80px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#4a4a4a,#1a1a1a);border:3px solid #333;margin:0 auto;cursor:grab;position:relative;touch-action:none;box-shadow:0 4px 12px rgba(0,0,0,.5)">
+            <div id="comms-knob-indicator" style="position:absolute;width:3px;height:24px;background:#00d4ff;left:50%;top:8px;transform-origin:bottom center;transform:translateX(-50%) rotate(0deg);border-radius:2px"></div>
+          </div>
+          <div style="font-size:.72rem;color:#00d4ff;margin-top:8px;font-family:'Orbitron',monospace" id="comms-freq-label">0%</div>
+        </div>
+        <!-- Indicatori -->
+        <div style="display:flex;justify-content:center;gap:12px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:6px;font-size:.72rem">
+            <div id="comms-led-red" style="width:12px;height:12px;border-radius:50%;background:#ff3535;box-shadow:0 0 6px #ff3535"></div>
+            <span style="color:#3a5570">NON SYNC</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:.72rem">
+            <div id="comms-led-green" style="width:12px;height:12px;border-radius:50%;background:#1a3a1a"></div>
+            <span style="color:#3a5570">SYNC</span>
+          </div>
+        </div>
+        <div class="msg msg-green" id="comms-sync-msg" style="display:none;text-align:center">✓ SEGNALE SINCRONIZZATO — ripristino in corso...</div>
+      </div>
     </div>
     <div class="card" id="sab-card" style="display:none">
       <h2>⚡ RICHIESTA SABOTAGGIO</h2>
@@ -1057,20 +1087,102 @@ async function restorePendingEmergency(){
   emergencyFailed = false;
 }
   
+// ── COMUNICAZIONI MINI-GAME ─────────────────────────────────────────
+let commsAnimIv=null, commsSyncCount=0, commsKnobAngle=0, commsTargetFreq=0, commsCurrentFreq=0;
+let commsKnobDragging=false, commsKnobStartY=0, commsKnobStartAngle=0;
+
+function drawWave(canvasId, freq, phase, color='#00ff44'){
+  const canvas=$(canvasId); if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // Scanlines
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  for(let y=0;y<H;y+=4){ ctx.fillRect(0,y,W,2); }
+  // Onda
+  ctx.beginPath();
+  ctx.strokeStyle=color;
+  ctx.lineWidth=2;
+  ctx.shadowColor=color;
+  ctx.shadowBlur=6;
+  for(let x=0;x<W;x++){
+    const t=x/W*Math.PI*2*freq+phase;
+    const y=H/2+Math.sin(t)*(H/2-8)*0.8;
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+}
+
+function startCommsGame(){
+  commsTargetFreq = 2 + Math.random()*4; // frequenza casuale 2-6
+  commsCurrentFreq = 1;
+  commsKnobAngle = 0;
+  commsSyncCount = 0;
+  let phase=0;
+  clearInterval(commsAnimIv);
+  commsAnimIv = setInterval(()=>{
+    phase += 0.08;
+    drawWave('wave-target', commsTargetFreq, phase, '#00ff44');
+    drawWave('wave-current', commsCurrentFreq, phase, '#00d4ff');
+    const diff = Math.abs(commsTargetFreq - commsCurrentFreq);
+    const synced = diff < 0.15;
+    $('comms-led-red').style.background = synced ? '#1a3a1a' : '#ff3535';
+    $('comms-led-red').style.boxShadow = synced ? 'none' : '0 0 6px #ff3535';
+    $('comms-led-green').style.background = synced ? '#00ff88' : '#1a3a1a';
+    $('comms-led-green').style.boxShadow = synced ? '0 0 6px #00ff88' : 'none';
+    if(synced){ commsSyncCount++; if(commsSyncCount>=60) gmResolveYellow(); }
+    else commsSyncCount=0;
+    const pct=Math.round((commsCurrentFreq-1)/5*100);
+    txt('comms-freq-label',`${pct}%`);
+    sh('comms-sync-msg', synced && commsSyncCount>10);
+  },16);
+}
+
+function setupKnob(){
+  const knob=$('comms-knob'); if(!knob) return;
+  const onStart=(e)=>{
+    commsKnobDragging=true;
+    commsKnobStartY=e.touches?e.touches[0].clientY:e.clientY;
+    commsKnobStartAngle=commsKnobAngle;
+    knob.style.cursor='grabbing';
+  };
+  const onMove=(e)=>{
+    if(!commsKnobDragging) return;
+    e.preventDefault();
+    const y=e.touches?e.touches[0].clientY:e.clientY;
+    const delta=(commsKnobStartY-y)*1.2;
+    commsKnobAngle=Math.max(-150,Math.min(150,commsKnobStartAngle+delta));
+    $('comms-knob-indicator').style.transform=`translateX(-50%) rotate(${commsKnobAngle}deg)`;
+    // Mappa angolo (-150,150) → frequenza (1,6)
+    commsCurrentFreq=1+((commsKnobAngle+150)/300)*5;
+  };
+  const onEnd=()=>{ commsKnobDragging=false; knob.style.cursor='grab'; };
+  knob.addEventListener('mousedown',onStart);
+  knob.addEventListener('touchstart',onStart,{passive:false});
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('touchmove',onMove,{passive:false});
+  document.addEventListener('mouseup',onEnd);
+  document.addEventListener('touchend',onEnd);
+}
+
 window.gmLaunchYellow = async () => {
-  const room=gv('yel-room')||'???',act=gv('yel-act')||'???';
   await update(gRef,{commsBlocked:true});
-  await bcast({type:'emergency_yellow',icon:'📡',title:'CODICE GIALLO',body:`Comunicazioni sospese!\n\nRecati in: ${room}\nCosa fare: ${act}`,color:'yellow'});
+  await bcast({type:'emergency_yellow',icon:'📡',title:'COMUNICAZIONI SOSPESE',body:'Recati alla postazione comunicazioni e sincronizza il segnale!',color:'yellow'});
+  sh('comms-idle',false);
   sh('comms-card',true);
-  gmLog(`📡 Codice Giallo → ${room}`,'yellow');
-};
-window.gmResolveYellow = async () => {
-  await update(gRef,{commsBlocked:false});
-  sh('comms-card',false);
-  await bcast({type:'resolved',icon:'📡',title:'COMUNICAZIONI RIPRISTINATE',body:'Puoi di nuovo richiedere riunioni libere.',color:'green'});
-  gmLog('📡 Comunicazioni ripristinate','green');
+  setupKnob();
+  startCommsGame();
+  gmLog('📡 Comunicazioni sospese','yellow');
 };
 
+window.gmResolveYellow = async () => {
+  clearInterval(commsAnimIv);
+  sh('comms-card',false);
+  sh('comms-idle',true);
+  await update(gRef,{commsBlocked:false});
+  await bcast({type:'resolved',icon:'📡',title:'COMUNICAZIONI RIPRISTINATE',body:'Il segnale è stato sincronizzato. Task e riunioni di nuovo disponibili!',color:'green'});
+  gmLog('📡 Comunicazioni ripristinate','green');
+};
 function checkSabReq(){
   const req=gS.sabRequest;
   if(!req||req.handled){ sh('sab-card',false); return; }
@@ -1102,7 +1214,8 @@ window.gmMeeting = async () => {
   const allPlayers=Object.values(gs.players||{});
   const totalDone=allPlayers.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
   await update(ref(db,`games/${gCode}/tasks`),{done:totalDone});
-  await update(gRef,{phase:'meeting',meetingPhase:'waiting',votes:{},votersDone:{},voteDetails:{},meetingArrivals:{},taskSnapshot:totalDone});
+  await update(gRef,{phase:'meeting',meetingPhase:'waiting',votes:{},votersDone:{},voteDetails:{},meetingArrivals:{},taskSnapshot:totalDone,
+    statusSnapshot:{players:gs.players,tasksDone:totalDone,tasksTotal:gs.tasks?.total||0}});
   const callerP=gs.players?.[caller];
   await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:`${callerP?.color||''} ${caller} ha chiamato una riunione!\n\nTutti al tavolo IMMEDIATAMENTE!`,color:'blue'});
   gmLog(`📢 Riunione libera — chiamata da ${caller}`,'blue');
@@ -1250,14 +1363,20 @@ function refreshPL(){
     const alive=Object.values(gs.players).filter(p=>p.alive&&p.name!==myName);
     htm('pl-ktgt',alive.map(p=>`<option>${p.name}</option>`).join('')||'<option>Nessuno</option>');
   }
-  // status tab
-  const all=Object.values(gs.players),alive2=all.filter(p=>p.alive);
-  txt('pl-al',alive2.length); txt('pl-de',all.length-alive2.length); txt('pl-tk',gs.tasks?.done||0);
-  const pct=gs.tasks?.total>0?Math.round(gs.tasks.done/gs.tasks.total*100):0;
-  $('pl-sp').style.width=pct+'%';
-  txt('pl-spt',`${gs.tasks?.done||0} / ${gs.tasks?.total||0}`);
+  // status tab — aggiorna solo durante/dopo riunione
   setPhaseBar('pl-pb','pl-pt',gs.phase);
-  htm('pl-pl',all.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span>${!p.alive?'<span class="badge b-ghost">👻</span>':''}</div>`).join(''));
+  if(gs.phase==='meeting' || gs.statusSnapshot){
+    const snap=gs.statusSnapshot||{};
+    const snapPlayers=snap.players||gs.players;
+    const all2=Object.values(snapPlayers),alive2=all2.filter(p=>p.alive);
+    txt('pl-al',alive2.length); txt('pl-de',all2.length-alive2.length);
+    txt('pl-tk',snap.tasksDone??gs.tasks?.done??0);
+    const tot=snap.tasksTotal??gs.tasks?.total??0;
+    const pct=tot>0?Math.round((snap.tasksDone??gs.tasks?.done??0)/tot*100):0;
+    $('pl-sp').style.width=pct+'%';
+    txt('pl-spt',`${snap.tasksDone??gs.tasks?.done??0} / ${tot}`);
+    htm('pl-pl',all2.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span>${!p.alive?'<span class="badge b-ghost">👻</span>':''}</div>`).join(''));
+  }
   // Gestione fasi riunione lato giocatore
   const mp = gs.meetingPhase;
   const inMeeting = gs.phase === 'meeting';
