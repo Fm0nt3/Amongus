@@ -1230,6 +1230,7 @@ function refreshPL(){
     const rc=$('pl-rc'); rc.className='role-card rc-imp';
     rc.innerHTML='<span class="ri">🔴</span><div class="rt c-imp">IMPOSTORE</div><div class="rd">Elimina i crewmate senza farti scoprire.<br>Simula di svolgere le task!</div>';
     sh('pl-imp',true);
+    renderPLTasks(me);
     if(!killCdIv){
       const killTs = localStorage.getItem(`killTs_${gCode}_${myName}`);
       if(killTs){
@@ -1343,7 +1344,8 @@ window.plToggle = (i,el) => {
   lTasks['t'+i]=!lTasks['t'+i];
   el.classList.toggle('done',lTasks['t'+i]); el.textContent=lTasks['t'+i]?'✓':'○';
   el.nextElementSibling?.classList.toggle('done',lTasks['t'+i]);
-  update(ref(db,`games/${gCode}/players/${myName}`),{tasksDone:Object.values(lTasks).filter(Boolean).length});
+  const me=gS?.players?.[myName];
+  if(me?.role==='crewmate') update(ref(db,`games/${gCode}/players/${myName}`),{tasksDone:Object.values(lTasks).filter(Boolean).length});
   localStorage.setItem(`tasks_${gCode}_${myName}`, JSON.stringify(lTasks));
 };
 
