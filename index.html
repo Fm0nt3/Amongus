@@ -488,6 +488,11 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <div class="rt c-dim">IN ATTESA</div>
         <div class="rd">L'educatore avvierà la partita a breve.</div>
       </div>
+      <div class="card" id="pl-dead-card" style="display:none">
+        <h2>SEI STATO ELIMINATO?</h2>
+        <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">Premi solo se un impostore ti ha appena eliminato. Il GM verrà aggiornato automaticamente.</div>
+        <button class="kb" id="pl-dead-btn" onclick="plReportDeath()">💀 SONO MORTO</button>
+      </div>
       <div id="pl-imp" style="display:none">
         <div class="card"><h2>I TUOI COMPLICI</h2><div id="pl-acc" class="dim">—</div></div>
         <div class="card">
@@ -529,11 +534,6 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
         <div class="pw"><div class="pf" id="pl-tp" style="width:0%"></div></div>
         <div class="pl mt8" id="pl-tt">0 / 0</div>
         <div id="pl-tl" style="margin-top:10px"></div>
-      </div>
-      <div class="card" id="pl-dead-card">
-        <h2>SEI STATO ELIMINATO?</h2>
-        <div class="msg msg-red" style="margin-bottom:12px;font-size:.78rem">Premi solo se un impostore ti ha appena eliminato. Il GM verrà aggiornato automaticamente.</div>
-        <button class="kb" id="pl-dead-btn" onclick="plReportDeath()">💀 SONO MORTO</button>
       </div>
     </div>
   </div>
@@ -611,14 +611,14 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
       <div class="card"><h2>FASE</h2><div class="phase-bar p-setup" id="pl-pb"><span>●</span><span id="pl-pt">In attesa</span></div></div>
       <div class="card"><h2>GIOCATORI</h2><div id="pl-pl"></div></div>
     </div>
-  </div>
+  
   <div class="bnav">
     <div class="nb on" id="pnav-role"    onclick="plNav('role')">   <span class="ni">👤</span>RUOLO</div>
     <div class="nb"    id="pnav-tasks"   onclick="plNav('tasks')">  <span class="ni">✅</span>TASK</div>
     <div class="nb"    id="pnav-status"  onclick="plNav('status')"> <span class="ni">📊</span>STATO</div>
     <div class="nb"    id="pnav-meeting" onclick="plNav('meeting')"><span class="ni">📢</span>RIUNIONE</div>
   </div>
-
+</div>
 
 <!-- ALERT OVERLAY -->
 <div id="aov">
