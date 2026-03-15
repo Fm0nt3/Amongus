@@ -595,116 +595,122 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           <div style="font-size:.72rem;color:#3a5570">La mappa non è disponibile</div>
         </div>
         <div id="map-floor-0">
-          <svg viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:280px;border-radius:6px;background:#0a1520">
-            <!-- Struttura piano terra -->
-            <!-- Cupola -->
-            <path d="M 120 280 A 230 230 0 0 1 580 280" fill="none" stroke="#2a4060" stroke-width="3"/>
-            <line x1="120" y1="280" x2="120" y2="320" stroke="#2a4060" stroke-width="3"/>
-            <line x1="580" y1="280" x2="580" y2="320" stroke="#2a4060" stroke-width="3"/>
-            <!-- Piano terra base -->
-            <rect x="120" y="320" width="460" height="10" fill="#2a4060"/>
+          <svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:280px;border-radius:6px;background:#0a1520">
+            <!-- Cupola esterna -->
+            <path d="M 130 310 A 220 220 0 0 1 570 310" fill="none" stroke="#2a4060" stroke-width="3"/>
+            <!-- Pareti verticali cupola -->
+            <line x1="130" y1="310" x2="130" y2="340" stroke="#2a4060" stroke-width="3"/>
+            <line x1="570" y1="310" x2="570" y2="340" stroke="#2a4060" stroke-width="3"/>
+            <!-- Pavimento principale -->
+            <line x1="30" y1="340" x2="670" y2="340" stroke="#2a4060" stroke-width="3"/>
             <!-- Scale sx -->
-            <rect x="30" y="310" width="90" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="75" y="345" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">scale</text>
+            <rect x="30" y="300" width="100" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="80" y="335" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">scale</text>
             <!-- Scale dx -->
-            <rect x="580" y="310" width="90" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="625" y="345" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">scale</text>
-            <!-- Cisterna -->
-            <rect x="170" y="240" width="80" height="80" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="210" y="228" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">cisterna</text>
+            <rect x="570" y="300" width="100" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="620" y="335" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">scale</text>
+            <!-- Muro divisorio QG sx -->
+            <line x1="280" y1="250" x2="280" y2="340" stroke="#2a4060" stroke-width="2"/>
+            <!-- Muro divisorio QG dx -->
+            <line x1="460" y1="250" x2="460" y2="340" stroke="#2a4060" stroke-width="2"/>
+            <!-- Tetto QG -->
+            <line x1="280" y1="250" x2="460" y2="250" stroke="#2a4060" stroke-width="2"/>
             <!-- Bagno -->
-            <rect x="90" y="260" width="80" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="130" y="250" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">bagno</text>
-            <!-- QG -->
-            <rect x="270" y="230" width="180" height="90" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="360" y="222" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">quartier generale</text>
-            <!-- Labels stanze -->
-            <text x="350" y="130" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">armeria</text>
-            <text x="490" y="175" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">magazzino</text>
-            <text x="350" y="430" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">hangar sonde</text>
-            <!-- PALLINI TASK - Piano Terra -->
-            <!-- Armeria: task 7 (birilli) -->
-            <circle id="dot-7a" cx="290" cy="120" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('7')" class="task-dot"/>
-            <circle id="dot-7a-pulse" cx="290" cy="120" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Armeria: task 12 (tende) -->
-            <circle id="dot-12a" cx="400" cy="120" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('12')" class="task-dot"/>
-            <circle id="dot-12a-pulse" cx="400" cy="120" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Magazzino: task 10 -->
-            <circle id="dot-10a" cx="490" cy="185" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('10')" class="task-dot"/>
-            <circle id="dot-10a-pulse" cx="490" cy="185" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Cisterna: task 1 (parte cisterna) -->
-            <circle id="dot-1cisterna" cx="210" cy="280" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
-            <circle id="dot-1cisterna-pulse" cx="210" cy="280" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- QG: task comune tessera -->
-            <circle id="dot-C1a" cx="330" cy="275" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('C1')" class="task-dot"/>
-            <circle id="dot-C1a-pulse" cx="330" cy="275" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- QG: task comune registro (bloccata) -->
-            <circle id="dot-C2a" cx="390" cy="275" r="10" fill="#3a5570" opacity="0.9" style="cursor:pointer" onclick="dotTap('C2')" class="task-dot"/>
-            <circle id="dot-C2a-pulse" cx="390" cy="275" r="10" fill="none" stroke="#3a5570" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Hangar sonde: task 9 -->
-            <circle id="dot-9a" cx="350" cy="455" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('9')" class="task-dot"/>
-            <circle id="dot-9a-pulse" cx="350" cy="455" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <rect x="85" y="265" width="75" height="55" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="122" y="258" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">bagno</text>
+            <!-- Cisterna (attaccata al bagno a destra) -->
+            <rect x="160" y="265" width="65" height="55" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="192" y="258" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">cisterna</text>
+            <!-- Magazzino (dentro cupola a destra) -->
+            <rect x="460" y="220" width="80" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="500" y="214" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">magazzino</text>
+            <!-- Label armeria -->
+            <text x="350" y="110" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">armeria</text>
+            <!-- Label QG -->
+            <text x="370" y="268" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">quartier generale</text>
+            <!-- Label hangar sonde (sotto pavimento) -->
+            <text x="350" y="390" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">hangar sonde</text>
+            <!-- PALLINI -->
+            <!-- Armeria task 7 -->
+            <circle id="dot-7a" cx="290" cy="130" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('7')" class="task-dot"/>
+            <!-- Armeria task 12 -->
+            <circle id="dot-12a" cx="400" cy="130" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('12')" class="task-dot"/>
+            <!-- Magazzino task 10 -->
+            <circle id="dot-10a" cx="500" cy="250" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('10')" class="task-dot"/>
+            <!-- Cisterna task 1 -->
+            <circle id="dot-1cisterna" cx="192" cy="293" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
+            <!-- QG task C1 tessera -->
+            <circle id="dot-C1a" cx="340" cy="295" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('C1')" class="task-dot"/>
+            <!-- QG task C2 registro -->
+            <circle id="dot-C2a" cx="400" cy="295" r="11" fill="#3a5570" opacity="0.9" style="cursor:pointer" onclick="dotTap('C2')" class="task-dot"/>
+            <!-- Hangar sonde task 9 -->
+            <circle id="dot-9a" cx="350" cy="410" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('9')" class="task-dot"/>
           </svg>
         </div>
         <div id="map-floor-1" style="display:none">
           <svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:280px;border-radius:6px;background:#0a1520">
-            <!-- Struttura primo piano -->
-            <path d="M 80 300 A 270 270 0 0 1 620 300" fill="none" stroke="#2a4060" stroke-width="3"/>
-            <line x1="80" y1="300" x2="80" y2="360" stroke="#2a4060" stroke-width="3"/>
-            <line x1="620" y1="300" x2="620" y2="360" stroke="#2a4060" stroke-width="3"/>
+            <!-- Cupola esterna -->
+            <path d="M 80 320 A 270 270 0 0 1 620 320" fill="none" stroke="#2a4060" stroke-width="3"/>
+            <line x1="80" y1="320" x2="80" y2="360" stroke="#2a4060" stroke-width="3"/>
+            <line x1="620" y1="320" x2="620" y2="360" stroke="#2a4060" stroke-width="3"/>
+            <!-- Pavimento -->
+            <line x1="20" y1="360" x2="680" y2="360" stroke="#2a4060" stroke-width="3"/>
+            <!-- Semicupola interna centrale -->
+            <path d="M 280 320 A 70 70 0 0 1 420 320" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <!-- Linee divisorie spicchi dal centro verso esterno -->
+            <!-- Centro geometrico arco: 350, 320 -->
+            <!-- Reattore: linea su verticale -->
+            <line x1="350" y1="250" x2="350" y2="320" stroke="#2a4060" stroke-width="2"/>
+            <!-- Navigazione sx: linea obliqua sinistra -->
+            <line x1="185" y1="195" x2="280" y2="320" stroke="#2a4060" stroke-width="2"/>
+            <!-- Infermieria dx: linea obliqua destra -->
+            <line x1="515" y1="195" x2="420" y2="320" stroke="#2a4060" stroke-width="2"/>
+            <!-- Laboratorio: linea tra infermieria e cupola dx -->
+            <line x1="560" y1="255" x2="420" y2="320" stroke="#2a4060" stroke-width="2"/>
             <!-- Scale sx -->
-            <rect x="20" y="295" width="65" height="80" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="52" y="340" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">scale</text>
+            <rect x="20" y="315" width="65" height="80" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="52" y="360" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">scale</text>
             <!-- Scale dx -->
-            <rect x="615" y="295" width="65" height="80" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="648" y="340" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">scale</text>
-            <!-- Bagni -->
-            <rect x="170" y="310" width="100" height="45" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="220" y="337" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">bagno</text>
-            <rect x="170" y="355" width="100" height="45" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="220" y="382" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">bagno</text>
-            <!-- Centrale elettrica -->
-            <rect x="100" y="390" width="110" height="70" fill="none" stroke="#2a4060" stroke-width="2"/>
-            <text x="155" y="420" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">centrale</text>
-            <text x="155" y="435" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">elettrica</text>
-            <!-- Labels -->
-            <text x="350" y="75" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">reattore</text>
-            <text x="205" y="160" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">navigazione</text>
-            <text x="480" y="145" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">infermieria</text>
-            <text x="510" y="230" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">laboratorio</text>
-            <text x="115" y="285" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">motore nord</text>
-            <text x="590" y="285" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">motore sud</text>
-            <!-- PALLINI TASK - Primo Piano -->
-            <!-- Reattore: task 6 -->
-            <circle id="dot-6a" cx="350" cy="95" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('6')" class="task-dot"/>
-            <circle id="dot-6a-pulse" cx="350" cy="95" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Navigazione: task 2 -->
-            <circle id="dot-2a" cx="195" cy="185" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('2')" class="task-dot"/>
-            <circle id="dot-2a-pulse" cx="195" cy="185" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Navigazione: task 5 -->
-            <circle id="dot-5a" cx="240" cy="210" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('5')" class="task-dot"/>
-            <circle id="dot-5a-pulse" cx="240" cy="210" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Infermieria: task 8 -->
-            <circle id="dot-8a" cx="470" cy="165" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('8')" class="task-dot"/>
-            <circle id="dot-8a-pulse" cx="470" cy="165" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Infermieria: task 13 -->
-            <circle id="dot-13a" cx="505" cy="185" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('13')" class="task-dot"/>
-            <circle id="dot-13a-pulse" cx="505" cy="185" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Laboratorio: task 4 -->
-            <circle id="dot-4a" cx="490" cy="240" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('4')" class="task-dot"/>
-            <circle id="dot-4a-pulse" cx="490" cy="240" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Laboratorio: task 11 -->
-            <circle id="dot-11a" cx="530" cy="255" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('11')" class="task-dot"/>
-            <circle id="dot-11a-pulse" cx="530" cy="255" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Motore nord: task 1 (parte motore nord) -->
-            <circle id="dot-1nord" cx="115" cy="300" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
-            <circle id="dot-1nord-pulse" cx="115" cy="300" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Motore sud: task 1 (parte motore sud) -->
-            <circle id="dot-1sud" cx="585" cy="300" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
-            <circle id="dot-1sud-pulse" cx="585" cy="300" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
-            <!-- Centrale elettrica: task 3 -->
-            <circle id="dot-3a" cx="155" cy="430" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('3')" class="task-dot"/>
-            <circle id="dot-3a-pulse" cx="155" cy="430" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <rect x="615" y="315" width="65" height="80" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="648" y="360" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">scale</text>
+            <!-- Bagno 1 -->
+            <rect x="175" y="330" width="95" height="38" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="222" y="354" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">bagno</text>
+            <!-- Bagno 2 -->
+            <rect x="175" y="368" width="95" height="38" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="222" y="392" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">bagno</text>
+            <!-- Centrale elettrica (sotto scale sx, attaccata) -->
+            <rect x="20" y="395" width="100" height="65" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="70" y="422" text-anchor="middle" fill="#3a5570" font-size="10" font-family="monospace">centrale</text>
+            <text x="70" y="438" text-anchor="middle" fill="#3a5570" font-size="10" font-family="monospace">elettrica</text>
+            <!-- Labels zone -->
+            <text x="350" y="85" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">reattore</text>
+            <text x="190" y="165" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">navigazione</text>
+            <text x="500" y="155" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">infermieria</text>
+            <text x="545" y="235" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">laboratorio</text>
+            <text x="108" y="310" text-anchor="middle" fill="#3a5570" font-size="10" font-family="monospace">motore nord</text>
+            <text x="592" y="310" text-anchor="middle" fill="#3a5570" font-size="10" font-family="monospace">motore sud</text>
+            <!-- PALLINI -->
+            <!-- Reattore task 6 -->
+            <circle id="dot-6a" cx="350" cy="110" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('6')" class="task-dot"/>
+            <!-- Navigazione task 2 -->
+            <circle id="dot-2a" cx="200" cy="195" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('2')" class="task-dot"/>
+            <!-- Navigazione task 5 -->
+            <circle id="dot-5a" cx="240" cy="230" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('5')" class="task-dot"/>
+            <!-- Infermieria task 8 -->
+            <circle id="dot-8a" cx="470" cy="175" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('8')" class="task-dot"/>
+            <!-- Infermieria task 13 -->
+            <circle id="dot-13a" cx="505" cy="210" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('13')" class="task-dot"/>
+            <!-- Laboratorio task 4 -->
+            <circle id="dot-4a" cx="535" cy="260" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('4')" class="task-dot"/>
+            <!-- Laboratorio task 11 -->
+            <circle id="dot-11a" cx="565" cy="285" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('11')" class="task-dot"/>
+            <!-- Motore nord task 1 -->
+            <circle id="dot-1nord" cx="108" cy="328" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
+            <!-- Motore sud task 1 -->
+            <circle id="dot-1sud" cx="592" cy="328" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
+            <!-- Centrale elettrica task 3 -->
+            <circle id="dot-3a" cx="70" cy="430" r="11" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('3')" class="task-dot"/>
           </svg>
         </div>
       </div>
