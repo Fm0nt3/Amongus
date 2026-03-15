@@ -148,6 +148,8 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
 .dim{color:#3a5570;font-size:.75rem}
 .ctr{text-align:center}
 .fl{display:flex;gap:8px;align-items:center}
+@keyframes dotPulse{0%,100%{opacity:0;r:10}50%{opacity:.5;r:15}}
+.task-dot{filter:drop-shadow(0 0 4px #ffc300)}
 </style>
 </head>
 <body>
@@ -569,17 +571,152 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
 
     <!-- tab task -->
     <div id="pt-tasks" style="display:none">
-      <div class="card" style="margin-bottom:14px;">
-        <div class="dim" style="margin-bottom:4px;">TASK GLOBALI (aggiornate a ogni riunione)</div>
+      <!-- Barra globale -->
+      <div style="padding:12px 16px 0">
+        <div class="dim" style="margin-bottom:4px;font-size:.7rem">TASK GLOBALI (aggiornate a ogni riunione)</div>
         <div class="pw"><div class="pf" id="pl-gtp" style="width:0%"></div></div>
         <div class="pl" id="pl-gtt">— / —</div>
         <div class="pl mt8" id="pl-free-meetings">Riunioni libere: —</div>
-      </div>
-      <div class="card">
-        <h2>LE TUE TASK</h2>
+        <!-- Barra task personali -->
+        <div class="dim" style="margin-top:10px;margin-bottom:4px;font-size:.7rem">LE TUE TASK</div>
         <div class="pw"><div class="pf" id="pl-tp" style="width:0%"></div></div>
         <div class="pl mt8" id="pl-tt">0 / 0</div>
-        <div id="pl-tl" style="margin-top:10px"></div>
+      </div>
+      <!-- Selettore piano -->
+      <div style="display:flex;gap:0;margin:10px 16px 0;border:1px solid #1a3050;border-radius:4px;overflow:hidden">
+        <button id="map-btn-0" onclick="switchFloor(0)" style="flex:1;padding:9px;background:rgba(0,212,255,.1);border:none;color:#00d4ff;font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:.08em;cursor:pointer">PIANO TERRA</button>
+        <button id="map-btn-1" onclick="switchFloor(1)" style="flex:1;padding:9px;background:transparent;border:none;border-left:1px solid #1a3050;color:#3a5570;font-family:'Orbitron',monospace;font-size:.65rem;letter-spacing:.08em;cursor:pointer">PRIMO PIANO</button>
+      </div>
+      <!-- Mappa -->
+      <div style="padding:10px 16px;position:relative">
+        <div id="map-comms-overlay" style="display:none;position:absolute;inset:10px 16px;background:rgba(7,16,26,.92);z-index:10;border-radius:6px;display:none;align-items:center;justify-content:center;flex-direction:column;gap:8px">
+          <div style="font-size:2rem">📡</div>
+          <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:#ffc300;letter-spacing:.1em">COMUNICAZIONI SOSPESE</div>
+          <div style="font-size:.72rem;color:#3a5570">La mappa non è disponibile</div>
+        </div>
+        <div id="map-floor-0">
+          <svg viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:6px;background:#0a1520">
+            <!-- Struttura piano terra -->
+            <!-- Cupola -->
+            <path d="M 120 280 A 230 230 0 0 1 580 280" fill="none" stroke="#2a4060" stroke-width="3"/>
+            <line x1="120" y1="280" x2="120" y2="320" stroke="#2a4060" stroke-width="3"/>
+            <line x1="580" y1="280" x2="580" y2="320" stroke="#2a4060" stroke-width="3"/>
+            <!-- Piano terra base -->
+            <rect x="120" y="320" width="460" height="10" fill="#2a4060"/>
+            <!-- Scale sx -->
+            <rect x="30" y="310" width="90" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="75" y="345" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">scale</text>
+            <!-- Scale dx -->
+            <rect x="580" y="310" width="90" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="625" y="345" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">scale</text>
+            <!-- Cisterna -->
+            <rect x="170" y="240" width="80" height="80" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="210" y="228" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">cisterna</text>
+            <!-- Bagno -->
+            <rect x="90" y="260" width="80" height="60" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="130" y="250" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">bagno</text>
+            <!-- QG -->
+            <rect x="270" y="230" width="180" height="90" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="360" y="222" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">quartier generale</text>
+            <!-- Labels stanze -->
+            <text x="350" y="130" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">armeria</text>
+            <text x="490" y="175" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">magazzino</text>
+            <text x="350" y="430" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">hangar sonde</text>
+            <!-- PALLINI TASK - Piano Terra -->
+            <!-- Armeria: task 7 (birilli) -->
+            <circle id="dot-7a" cx="290" cy="120" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('7')" class="task-dot"/>
+            <circle id="dot-7a-pulse" cx="290" cy="120" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Armeria: task 12 (tende) -->
+            <circle id="dot-12a" cx="400" cy="120" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('12')" class="task-dot"/>
+            <circle id="dot-12a-pulse" cx="400" cy="120" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Magazzino: task 10 -->
+            <circle id="dot-10a" cx="490" cy="185" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('10')" class="task-dot"/>
+            <circle id="dot-10a-pulse" cx="490" cy="185" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Cisterna: task 1 (parte cisterna) -->
+            <circle id="dot-1cisterna" cx="210" cy="280" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
+            <circle id="dot-1cisterna-pulse" cx="210" cy="280" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- QG: task comune tessera -->
+            <circle id="dot-C1a" cx="330" cy="275" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('C1')" class="task-dot"/>
+            <circle id="dot-C1a-pulse" cx="330" cy="275" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- QG: task comune registro (bloccata) -->
+            <circle id="dot-C2a" cx="390" cy="275" r="10" fill="#3a5570" opacity="0.9" style="cursor:pointer" onclick="dotTap('C2')" class="task-dot"/>
+            <circle id="dot-C2a-pulse" cx="390" cy="275" r="10" fill="none" stroke="#3a5570" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Hangar sonde: task 9 -->
+            <circle id="dot-9a" cx="350" cy="455" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('9')" class="task-dot"/>
+            <circle id="dot-9a-pulse" cx="350" cy="455" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+          </svg>
+        </div>
+        <div id="map-floor-1" style="display:none">
+          <svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:6px;background:#0a1520">
+            <!-- Struttura primo piano -->
+            <path d="M 80 300 A 270 270 0 0 1 620 300" fill="none" stroke="#2a4060" stroke-width="3"/>
+            <line x1="80" y1="300" x2="80" y2="360" stroke="#2a4060" stroke-width="3"/>
+            <line x1="620" y1="300" x2="620" y2="360" stroke="#2a4060" stroke-width="3"/>
+            <!-- Scale sx -->
+            <rect x="20" y="295" width="65" height="80" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="52" y="340" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">scale</text>
+            <!-- Scale dx -->
+            <rect x="615" y="295" width="65" height="80" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="648" y="340" text-anchor="middle" fill="#3a5570" font-size="12" font-family="monospace">scale</text>
+            <!-- Bagni -->
+            <rect x="170" y="310" width="100" height="45" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="220" y="337" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">bagno</text>
+            <rect x="170" y="355" width="100" height="45" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="220" y="382" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">bagno</text>
+            <!-- Centrale elettrica -->
+            <rect x="100" y="390" width="110" height="70" fill="none" stroke="#2a4060" stroke-width="2"/>
+            <text x="155" y="420" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">centrale</text>
+            <text x="155" y="435" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">elettrica</text>
+            <!-- Labels -->
+            <text x="350" y="75" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">reattore</text>
+            <text x="205" y="160" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">navigazione</text>
+            <text x="480" y="145" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">infermieria</text>
+            <text x="510" y="230" text-anchor="middle" fill="#3a5570" font-size="13" font-family="monospace">laboratorio</text>
+            <text x="115" y="285" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">motore nord</text>
+            <text x="590" y="285" text-anchor="middle" fill="#3a5570" font-size="11" font-family="monospace">motore sud</text>
+            <!-- PALLINI TASK - Primo Piano -->
+            <!-- Reattore: task 6 -->
+            <circle id="dot-6a" cx="350" cy="95" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('6')" class="task-dot"/>
+            <circle id="dot-6a-pulse" cx="350" cy="95" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Navigazione: task 2 -->
+            <circle id="dot-2a" cx="195" cy="185" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('2')" class="task-dot"/>
+            <circle id="dot-2a-pulse" cx="195" cy="185" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Navigazione: task 5 -->
+            <circle id="dot-5a" cx="240" cy="210" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('5')" class="task-dot"/>
+            <circle id="dot-5a-pulse" cx="240" cy="210" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Infermieria: task 8 -->
+            <circle id="dot-8a" cx="470" cy="165" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('8')" class="task-dot"/>
+            <circle id="dot-8a-pulse" cx="470" cy="165" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Infermieria: task 13 -->
+            <circle id="dot-13a" cx="505" cy="185" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('13')" class="task-dot"/>
+            <circle id="dot-13a-pulse" cx="505" cy="185" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Laboratorio: task 4 -->
+            <circle id="dot-4a" cx="490" cy="240" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('4')" class="task-dot"/>
+            <circle id="dot-4a-pulse" cx="490" cy="240" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Laboratorio: task 11 -->
+            <circle id="dot-11a" cx="530" cy="255" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('11')" class="task-dot"/>
+            <circle id="dot-11a-pulse" cx="530" cy="255" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Motore nord: task 1 (parte motore nord) -->
+            <circle id="dot-1nord" cx="115" cy="300" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
+            <circle id="dot-1nord-pulse" cx="115" cy="300" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Motore sud: task 1 (parte motore sud) -->
+            <circle id="dot-1sud" cx="585" cy="300" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('1')" class="task-dot"/>
+            <circle id="dot-1sud-pulse" cx="585" cy="300" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+            <!-- Centrale elettrica: task 3 -->
+            <circle id="dot-3a" cx="155" cy="430" r="10" fill="#ffc300" opacity="0.9" style="cursor:pointer" onclick="dotTap('3')" class="task-dot"/>
+            <circle id="dot-3a-pulse" cx="155" cy="430" r="10" fill="none" stroke="#ffc300" stroke-width="2" opacity="0" class="dot-pulse"/>
+          </svg>
+        </div>
+      </div>
+      <!-- Card conferma task -->
+      <div id="task-confirm-card" style="display:none;margin:0 16px 16px;padding:14px;background:#0e1c2e;border:1px solid #ffc300;border-radius:6px">
+        <div style="font-family:'Orbitron',monospace;font-size:.7rem;color:#ffc300;margin-bottom:4px" id="task-confirm-room">—</div>
+        <div style="font-size:.88rem;margin-bottom:4px" id="task-confirm-name">—</div>
+        <div style="font-size:.75rem;color:#3a5570;margin-bottom:12px" id="task-confirm-desc">—</div>
+        <div class="row">
+          <button class="btn btn-green" onclick="taskConfirm()">✓ COMPLETATA</button>
+          <button class="btn btn-red" onclick="taskDismiss()">✗ CHIUDI</button>
+        </div>
       </div>
     </div>
   </div>
@@ -699,28 +836,8 @@ let gmPL = [];        // setup players list
 let lTasks = {};      // local task checkboxes
 let killCdIv, emIv, meetIv, alertIv, plDiscIv;
 
-const TASKS = [
-  "Metti in ordine gli oggetti sul tavolo per colore",
-  "Fai 3 canestri con la pallina da ping-pong nel secchiello",
-  "Trova tutti gli oggetti rossi e portali al QG",
-  "Risolvi il puzzle-rompicapo sul tavolo",
-  "Trova la chiave nascosta nell'area di gioco",
-  "Conta esattamente 47 oggetti nella stanza",
-  "Metti le carte in ordine crescente senza guardare",
-  "Trova tutti gli oggetti con la X e portali al QG",
-  "Completa il labirinto su carta senza sollevare la penna",
-  "Abbina le forme ai fori giusti entro 30 secondi",
-  "Porta un messaggio scritto a un altro giocatore senza parlare",
-  "Disegna il simbolo dell'equipaggio sul foglio al QG",
-  "Ricostruisci la sequenza di carte nell'ordine corretto",
-  "Trova la stanza con la luce rossa e segnalalo all'edu",
-  "Porta 3 oggetti diversi al QG entro 2 minuti",
-  "Scrivi il codice segreto sul foglio nel cassetto",
-  "Trova il biglietto nascosto sotto la sedia numero 3",
-  "Allinea tutti i libri dal più alto al più basso",
-  "Fai 10 salti consecutivi nella stanza indicata",
-  "Raduna tutti gli oggetti gialli nell'angolo destro"
-];
+const TASKS = ['1','2','3','4','5','6','7','8','9','10','11','12','13'];
+const COMMON_TASKS = ['C1','C2'];
 
 // ── UTILS ──────────────────────────────────────────────────────────
 const $   = id => document.getElementById(id);
@@ -848,7 +965,7 @@ window.gmStart = async () => {
   gmPL.forEach(p=>{
     const imp=imps.has(p.name);
     players[p.name]={name:p.name,color:p.color,role:imp?'impostor':'crewmate',alive:true,tasksDone:0,
-  tasks:shuffle([...TASKS]).slice(0,tEach),accomplices:imp?[...imps].filter(n=>n!==p.name):[]};
+  tasks:[...COMMON_TASKS, ...shuffle([...TASKS]).slice(0, Math.max(0, tEach-COMMON_TASKS.length))],accomplices:imp?[...imps].filter(n=>n!==p.name):[]};
   });
 
   const realTotal = gmPL.filter(p=>!imps.has(p.name)).reduce((_,__)=>_+tEach,0);
@@ -1518,26 +1635,157 @@ function refreshPL(){
   }
 }
   
-function renderPLTasks(me){
-  const tasks=me.tasks||[];
-  const done=tasks.filter((_,i)=>lTasks['t'+i]).length;
-  const blocked=gS.commsBlocked;
-  $('pl-tp').style.width=blocked?'0%':tasks.length?Math.round(done/tasks.length*100)+'%':'0%';
-  txt('pl-tt', blocked ? '⛔ SEGNALE ASSENTE' : `${done} / ${tasks.length} completate`);
-  htm('pl-tl', blocked
-    ? `<div style="text-align:center;padding:24px;font-family:'Orbitron',monospace;font-size:.8rem;color:#3a5570;letter-spacing:.1em">📡 COMUNICAZIONI SOSPESE<br><br>Le task non sono visibili.</div>`
-    : tasks.map((t,i)=>`<div class="ti"><div class="tc ${lTasks['t'+i]?'done':''}" onclick="plToggle(${i},this)">${lTasks['t'+i]?'✓':'○'}</div><span class="tt ${lTasks['t'+i]?'done':''}">${t}</span></div>`).join(''));
-}
-
-window.plToggle = (i,el) => {
-  lTasks['t'+i]=!lTasks['t'+i];
-  el.classList.toggle('done',lTasks['t'+i]); el.textContent=lTasks['t'+i]?'✓':'○';
-  el.nextElementSibling?.classList.toggle('done',lTasks['t'+i]);
-  const me=gS?.players?.[myName];
-  if(me?.role==='crewmate') update(ref(db,`games/${gCode}/players/${myName}`),{tasksDone:Object.values(lTasks).filter(Boolean).length});
-  localStorage.setItem(`tasks_${gCode}_${myName}`, JSON.stringify(lTasks));
+// ── TASK DEFINITIONS ───────────────────────────────────────────────
+const TASK_DATA = {
+  'C1': { name:'Passare la tessera',         room:'Quartier Generale', desc:'Scorri la tessera sull\'oggetto apposito.',                          floor:0, common:true  },
+  'C2': { name:'Firmare registro fine turno', room:'Quartier Generale', desc:'Firma il registro. Si sblocca solo dopo aver completato tutto.',      floor:0, common:true, last:true },
+  '1':  { name:'Rifornire motori',            room:'Cisterna → Motore Nord & Sud', desc:'Riempi i bicchieri con la caraffa dalla cisterna e portali ai motori.', floor:0, multiFloor:true },
+  '2':  { name:'Tracciare rotta della nave',  room:'Navigazione',       desc:'Traccia la rotta sulla mappa di navigazione.',                        floor:1 },
+  '3':  { name:'Collegare cavi elettrici',    room:'Centrale Elettrica', desc:'Collega i cavi elettrici nel pannello.',                             floor:1 },
+  '4':  { name:'Replicare composizione campione', room:'Laboratorio',   desc:'Replica la composizione del campione come indicato.',                 floor:1 },
+  '5':  { name:'Assemblare magnete',          room:'Navigazione',       desc:'Assembla il magnete seguendo le istruzioni.',                         floor:1 },
+  '6':  { name:'Trasportare materiale radioattivo', room:'Reattore',    desc:'Sposta l\'oggetto toccandolo solo con i due pennarelli.',             floor:1 },
+  '7':  { name:'Rimozione ostacoli dalla rotta', room:'Armeria',        desc:'Fai cadere tutti i birilli con la palla.',                            floor:0 },
+  '8':  { name:'Misurazione temperatura palmare', room:'Infermieria',   desc:'Misura la temperatura della tua mano con il termometro.',             floor:1 },
+  '9':  { name:'Lanciare sonda',              room:'Hangar Sonde',      desc:'Fai un aeroplano di carta e lancialo nel giardino.',                  floor:0 },
+  '10': { name:'Fare inventario scorte',      room:'Magazzino',         desc:'Conta quanti chili di pasta ci sono nell\'armadio in salone.',        floor:0 },
+  '11': { name:'Fare ricerca',                room:'Laboratorio',       desc:'Prendi un libro da Navigazione e portalo al Laboratorio.',            floor:1 },
+  '12': { name:'Attivare/disattivare scudi',  room:'Armeria',           desc:'Tira o togli tutte le tende dell\'armeria.',                          floor:0 },
+  '13': { name:'Esercizi gravitazionali',     room:'Infermieria',       desc:'Fai 20 jumping jacks in infermieria.',                                floor:1 },
 };
 
+// Tutti i dot e a quale taskId appartengono
+const DOT_TASK_MAP = {
+  'dot-7a':'7','dot-12a':'12','dot-10a':'10','dot-1cisterna':'1',
+  'dot-C1a':'C1','dot-C2a':'C2','dot-9a':'9','dot-6a':'6',
+  'dot-2a':'2','dot-5a':'5','dot-8a':'8','dot-13a':'13',
+  'dot-4a':'4','dot-11a':'11','dot-1nord':'1','dot-1sud':'1','dot-3a':'3'
+};
+
+let currentFloor = 0;
+let pendingTaskId = null;
+
+window.switchFloor = (f) => {
+  currentFloor = f;
+  sh('map-floor-0', f===0);
+  sh('map-floor-1', f===1);
+  const b0=$('map-btn-0'), b1=$('map-btn-1');
+  if(b0){ b0.style.background=f===0?'rgba(0,212,255,.1)':'transparent'; b0.style.color=f===0?'#00d4ff':'#3a5570'; }
+  if(b1){ b1.style.background=f===1?'rgba(0,212,255,.1)':'transparent'; b1.style.color=f===1?'#00d4ff':'#3a5570'; }
+  taskDismiss();
+};
+
+window.dotTap = (taskId) => {
+  if(gS.commsBlocked) return;
+  const me=gS?.players?.[myName]; if(!me) return;
+  const myTasks=me.tasks||[];
+  if(!myTasks.includes(taskId)){ 
+    // Mostra info ma non completabile
+    const td=TASK_DATA[taskId]; if(!td) return;
+    txt('task-confirm-room', td.room);
+    txt('task-confirm-name', td.name);
+    txt('task-confirm-desc', 'Non hai questa task assegnata.');
+    $('task-confirm-card').style.borderColor='#1a3050';
+    $('task-confirm-card').querySelector('.btn-green').style.display='none';
+    pendingTaskId=null;
+    sh('task-confirm-card',true);
+    return;
+  }
+  const td=TASK_DATA[taskId]; if(!td) return;
+  // Controlla se è bloccata (registro)
+  if(td.last){
+    const otherTasks=myTasks.filter(t=>t!=='C2');
+    const allDone=otherTasks.every(t=>lTasks['t'+t]);
+    if(!allDone){
+      txt('task-confirm-room', td.room);
+      txt('task-confirm-name', td.name);
+      txt('task-confirm-desc', '🔒 Completa prima tutte le altre task!');
+      $('task-confirm-card').style.borderColor='#3a5570';
+      $('task-confirm-card').querySelector('.btn-green').style.display='none';
+      pendingTaskId=null;
+      sh('task-confirm-card',true);
+      return;
+    }
+  }
+  if(lTasks['t'+taskId]){
+    txt('task-confirm-room', td.room);
+    txt('task-confirm-name', '✓ '+td.name);
+    txt('task-confirm-desc', 'Hai già completato questa task.');
+    $('task-confirm-card').style.borderColor='#00ff88';
+    $('task-confirm-card').querySelector('.btn-green').style.display='none';
+    pendingTaskId=null;
+    sh('task-confirm-card',true);
+    return;
+  }
+  txt('task-confirm-room', td.room);
+  txt('task-confirm-name', td.name);
+  txt('task-confirm-desc', td.desc);
+  $('task-confirm-card').style.borderColor='#ffc300';
+  $('task-confirm-card').querySelector('.btn-green').style.display='block';
+  pendingTaskId=taskId;
+  sh('task-confirm-card',true);
+};
+
+window.taskConfirm = () => {
+  if(!pendingTaskId) return;
+  lTasks['t'+pendingTaskId]=true;
+  taskDismiss();
+  renderMapDots();
+  const me=gS?.players?.[myName];
+  const myTasks=me?.tasks||[];
+  const done=myTasks.filter(t=>lTasks['t'+t]).length;
+  if(me?.role==='crewmate') update(ref(db,`games/${gCode}/players/${myName}`),{tasksDone:done});
+  localStorage.setItem(`tasks_${gCode}_${myName}`, JSON.stringify(lTasks));
+  const pct=myTasks.length?Math.round(done/myTasks.length*100):0;
+  $('pl-tp').style.width=pct+'%';
+  txt('pl-tt',`${done} / ${myTasks.length} completate`);
+  pendingTaskId=null;
+};
+
+window.taskDismiss = () => {
+  pendingTaskId=null;
+  sh('task-confirm-card',false);
+};
+
+function renderMapDots(){
+  const me=gS?.players?.[myName]; if(!me) return;
+  const myTasks=me.tasks||[];
+  const blocked=gS.commsBlocked;
+  // Overlay comunicazioni
+  const overlay=$('map-comms-overlay');
+  if(overlay) overlay.style.display=blocked?'flex':'none';
+  // Aggiorna ogni dot
+  Object.entries(DOT_TASK_MAP).forEach(([dotId, taskId])=>{
+    const dot=$(dotId); if(!dot) return;
+    const hasTask=myTasks.includes(taskId);
+    const isDone=lTasks['t'+taskId];
+    const td=TASK_DATA[taskId];
+    const isLast=td?.last;
+    const othersDone=isLast?myTasks.filter(t=>t!=='C2').every(t=>lTasks['t'+t]):true;
+    if(!hasTask){
+      dot.setAttribute('fill','#1a2a3a');
+      dot.setAttribute('opacity','0.4');
+    } else if(isDone){
+      dot.setAttribute('fill','#00ff88');
+      dot.setAttribute('opacity','0.7');
+    } else if(isLast && !othersDone){
+      dot.setAttribute('fill','#3a5570');
+      dot.setAttribute('opacity','0.8');
+    } else {
+      dot.setAttribute('fill','#ffc300');
+      dot.setAttribute('opacity','0.9');
+    }
+  });
+}
+
+function renderPLTasks(me){
+  const myTasks=me.tasks||[];
+  const blocked=gS.commsBlocked;
+  const done=myTasks.filter(t=>lTasks['t'+t]).length;
+  $('pl-tp').style.width=blocked?'0%':myTasks.length?Math.round(done/myTasks.length*100)+'%':'0%';
+  txt('pl-tt', blocked ? '⛔ SEGNALE ASSENTE' : `${done} / ${myTasks.length} completate`);
+  renderMapDots();
+}
 window.plKill = async () => {
   const secs = gS.config?.killCd || 60;
   localStorage.setItem(`killTs_${gCode}_${myName}`, Date.now());
