@@ -1080,11 +1080,11 @@ function refreshGM(){
   const callerSelT3=$('meet-caller-t3');
   if(callerSelT3){
     const currentValT3=callerSelT3.value;
-    const maxFree=gs.config?.fmeet??2;
+    const maxFreeT3=gs.config?.fmeet??2;
     callerSelT3.innerHTML='<option value="">— seleziona giocatore —</option>'+
       alive.map(p=>{
         const used=gs.players[p.name]?.freeMeetings||0;
-        const left=maxFree-used;
+        const left=maxFreeT3-used;
         return `<option value="${p.name}" ${left<=0?'style="color:#ff3535"':''}>${p.color} ${p.name} (${left} riun. rimaste)</option>`;
       }).join('');
     callerSelT3.value=currentValT3;
