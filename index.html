@@ -1029,7 +1029,8 @@ function startOxyCodes(){
       if(bar){ bar.style.transition='none'; bar.style.width='100%'; setTimeout(()=>bar.style.transition='width 1s linear',50); }
     }
   },1000);
-
+}
+  
 async function autoWinCheck(){
   if(!gS.pendingWinCheck) return;
   await update(gRef,{pendingWinCheck:null});
