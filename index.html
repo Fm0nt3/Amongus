@@ -398,6 +398,15 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
       <div class="msg msg-yellow" id="sab-msg">—</div>
       <div class="row mt8"><button class="btn btn-green" onclick="gmApproveSab()">✓ ATTIVA</button><button class="btn btn-red" onclick="gmDenySab()">✗ RIFIUTA</button></div>
     </div>
+    <div class="card" id="t3-meet-card">
+      <h2>CONVOCA RIUNIONE LIBERA</h2>
+      <div class="field">
+        <label>CHI LA CHIAMA</label>
+        <select id="meet-caller-t3" onchange="gmCheckCallerT3()"><option value="">— seleziona giocatore —</option></select>
+      </div>
+      <div class="msg msg-yellow" id="meet-caller-warn-t3" style="display:none;font-size:.78rem">❌ Questo giocatore ha esaurito le riunioni libere!</div>
+      <button class="btn btn-blue btn-big" onclick="gmMeetingT3()">📢 CONVOCA RIUNIONE</button>
+    </div>
   </div>
 
   <!-- T4 RIUNIONE -->
@@ -1068,6 +1077,21 @@ function refreshGM(){
     const selUsed=selPlayer?.freeMeetings||0;
     sh('meet-caller-warn', !!currentVal && selUsed>=(gs.config?.fmeet??2));
   }
+  const callerSelT3=$('meet-caller-t3');
+  if(callerSelT3){
+    const currentValT3=callerSelT3.value;
+    const maxFree=gs.config?.fmeet??2;
+    callerSelT3.innerHTML='<option value="">— seleziona giocatore —</option>'+
+      alive.map(p=>{
+        const used=gs.players[p.name]?.freeMeetings||0;
+        const left=maxFree-used;
+        return `<option value="${p.name}" ${left<=0?'style="color:#ff3535"':''}>${p.color} ${p.name} (${left} riun. rimaste)</option>`;
+      }).join('');
+    callerSelT3.value=currentValT3;
+    const selPlayer3=gs.players?.[currentValT3];
+    const selUsed3=selPlayer3?.freeMeetings||0;
+    sh('meet-caller-warn-t3', !!currentValT3 && selUsed3>=(gs.config?.fmeet??2));
+  }
   if(gs.phase==='meeting') sh('meet-live',true);
   if(gs.phase!=='meeting'){ clearInterval(meetIv); meetIv=null; sh('meet-live',false); }
   htm('gm-pl',all.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span><span class="badge ${p.alive?(p.role==='crewmate'?'b-crew':'b-imp'):'b-ghost'}">${!p.alive?'👻':p.role==='crewmate'?'CREW':'IMP'}</span></div>`).join(''));
@@ -1095,6 +1119,7 @@ function refreshGM(){
   const em = gs.activeEmergency;
   const comms = gs.commsBlocked;
   sh('em-idle', !em && !comms);
+  sh('t3-meet-card', !em && !comms && gs.phase!=='meeting');
   sh('em-oxygen', !!(em && em.type==='oxygen'));
   sh('em-reactor', !!(em && em.type==='reactor'));
   // Mostra mini-gioco comunicazioni automaticamente
@@ -1152,6 +1177,35 @@ function refreshGM(){
   }
 }
 
+
+window.gmCheckCallerT3 = () => {
+  const name=gv('meet-caller-t3');
+  const maxFree=gS.config?.fmeet??2;
+  const used=gS.players?.[name]?.freeMeetings||0;
+  sh('meet-caller-warn-t3', !!name && used>=maxFree);
+};
+
+window.gmMeetingT3 = async () => {
+  const gs=gS;
+  const caller=gv('meet-caller-t3');
+  if(!caller){ alert('Seleziona chi chiama la riunione!'); return; }
+  if(gS.activeEmergency){ alert('❌ Impossibile convocare una riunione durante un\'emergenza!'); return; }
+  if(gs.commsBlocked){ alert('❌ Comunicazioni sospese!'); return; }
+  const maxFree=gs.config?.fmeet??2;
+  const used=gs.players?.[caller]?.freeMeetings||0;
+  if(used>=maxFree){ alert(`❌ ${caller} ha già usato tutte le ${maxFree} riunioni libere!`); return; }
+  await update(ref(db,`games/${gCode}/players/${caller}`),{freeMeetings:used+1});
+  const allPlayers=Object.values(gs.players||{});
+  const totalDone=allPlayers.filter(p=>p.role==='crewmate').reduce((s,p)=>s+(p.tasksDone||0),0);
+  await update(ref(db,`games/${gCode}/tasks`),{done:totalDone});
+  await update(gRef,{phase:'meeting',meetingPhase:'waiting',votes:{},votersDone:{},voteDetails:{},meetingArrivals:{},taskSnapshot:totalDone,
+    statusSnapshot:{players:gs.players,tasksDone:totalDone,tasksTotal:gs.tasks?.total||0}});
+  const callerP=gs.players?.[caller];
+  await bcast({type:'meeting',icon:'📢',title:'RIUNIONE!',body:`${callerP?.color||''} ${caller} ha chiamato una riunione!\n\nTutti al tavolo IMMEDIATAMENTE!`,color:'blue'});
+  gmLog(`📢 Riunione libera — chiamata da ${caller}`,'blue');
+  sh('meet-live',true);
+};
+  
 window.gmCheckCaller = () => {
   const name=gv('meet-caller');
   const maxFree=gS.config?.fmeet??2;
