@@ -595,7 +595,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           <div style="font-size:.72rem;color:#3a5570">La mappa non è disponibile</div>
         </div>
         <div id="map-floor-0">
-          <svg viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:6px;background:#0a1520">
+          <svg viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:280px;border-radius:6px;background:#0a1520">
             <!-- Struttura piano terra -->
             <!-- Cupola -->
             <path d="M 120 280 A 230 230 0 0 1 580 280" fill="none" stroke="#2a4060" stroke-width="3"/>
@@ -647,7 +647,7 @@ hr{border:none;border-top:1px solid #1a3050;margin:12px 0}
           </svg>
         </div>
         <div id="map-floor-1" style="display:none">
-          <svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:6px;background:#0a1520">
+          <svg viewBox="0 0 700 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:280px;border-radius:6px;background:#0a1520">
             <!-- Struttura primo piano -->
             <path d="M 80 300 A 270 270 0 0 1 620 300" fill="none" stroke="#2a4060" stroke-width="3"/>
             <line x1="80" y1="300" x2="80" y2="360" stroke="#2a4060" stroke-width="3"/>
@@ -1549,18 +1549,20 @@ function refreshPL(){
   }
   // status tab — aggiorna solo durante/dopo riunione
   setPhaseBar('pl-pb','pl-pt',gs.phase);
-  if(gs.phase==='meeting' || gs.statusSnapshot){
-    const snap=gs.statusSnapshot||{};
-    const snapPlayers=snap.players||gs.players;
-    const all2=Object.values(snapPlayers),alive2=all2.filter(p=>p.alive);
-    txt('pl-al',alive2.length); txt('pl-de',all2.length-alive2.length);
-    txt('pl-tk',snap.tasksDone??gs.tasks?.done??0);
-    const tot=snap.tasksTotal??gs.tasks?.total??0;
-    const pct=tot>0?Math.round((snap.tasksDone??gs.tasks?.done??0)/tot*100):0;
-    $('pl-sp').style.width=pct+'%';
-    txt('pl-spt',`${snap.tasksDone??gs.tasks?.done??0} / ${tot}`);
-    htm('pl-pl',all2.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span>${!p.alive?'<span class="badge b-ghost">👻</span>':''}</div>`).join(''));
-  }
+  // Lista giocatori sempre visibile
+  const allP=Object.values(gs.players);
+  htm('pl-pl',allP.map(p=>`<div class="pr ${p.alive?'':'dead'}"><div class="dot ${p.alive?'d-on':'d-off'}"></div><span class="pe">${p.color}</span><span class="pname">${p.name}</span>${!p.alive?'<span class="badge b-ghost">👻</span>':''}</div>`).join(''));
+  // Stats — snapshot alle riunioni, live prima della prima
+  const snapData=gs.statusSnapshot||null;
+  const snapPlayers=snapData?.players||gs.players;
+  const all2=Object.values(snapPlayers),alive2=all2.filter(p=>p.alive);
+  txt('pl-al',alive2.length); txt('pl-de',all2.length-alive2.length);
+  const tasksDoneSnap=snapData?.tasksDone??gs.tasks?.done??0;
+  const tot=snapData?.tasksTotal??gs.tasks?.total??0;
+  const pct=tot>0?Math.round(tasksDoneSnap/tot*100):0;
+  $('pl-sp').style.width=pct+'%';
+  txt('pl-spt',`${tasksDoneSnap} / ${tot}`);
+  txt('pl-tk',tasksDoneSnap);
   // Gestione fasi riunione lato giocatore
   const mp = gs.meetingPhase;
   const inMeeting = gs.phase === 'meeting';
@@ -1749,7 +1751,7 @@ window.taskDismiss = () => {
 };
 
 function renderMapDots(){
-  const me=gS?.players?.[myName]; if(!me) return;
+  const me=gS?.players?.[myName]; if(!me || !me.tasks) return;  
   const myTasks=me.tasks||[];
   const blocked=gS.commsBlocked;
   // Overlay comunicazioni
